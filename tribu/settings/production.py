@@ -1,14 +1,68 @@
-from .base import *
+import os
+
+import dj_database_url
+
+from .base import *  # noqa: F401,F403
 
 DEBUG = False
 
-# ManifestStaticFilesStorage is recommended in production, to prevent
-# outdated JavaScript / CSS assets being served from cache
-# (e.g. after a Wagtail upgrade).
-# See https://docs.djangoproject.com/en/6.0/ref/contrib/staticfiles/#manifeststaticfilesstorage
-STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+# SECURITY ---------------------------------------------------------------
+
+SECRET_KEY = os.environ["SECRET_KEY"]
+
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+# Behind the nginx reverse proxy, trust the forwarded protocol header.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+# Toggle HTTPS hardening once a TLS certificate is in front of nginx.
+if os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "false").lower() == "true":
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# DATABASE ---------------------------------------------------------------
+
+DATABASES = {
+    "default": dj_database_url.config(
+        env="DATABASE_URL",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
+
+# STATIC / MEDIA ---------------------------------------------------------
+
+# ManifestStaticFilesStorage prevents stale cached JS/CSS after a deploy.
+STORAGES["staticfiles"]["BACKEND"] = (  # noqa: F405
+    "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+)
+
+# WAGTAIL ----------------------------------------------------------------
+
+WAGTAILADMIN_BASE_URL = os.environ.get(
+    "WAGTAILADMIN_BASE_URL", "https://latribudoya.fr"
+)
+
+# EMAIL ------------------------------------------------------------------
+
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
 
 try:
-    from .local import *
+    from .local import *  # noqa: F401,F403
 except ImportError:
     pass

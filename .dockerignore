@@ -8,7 +8,11 @@ __pycache__
 *.pyc
 .DS_Store
 *.swp
+.git/
+.venv/
 /venv/
+/tools/tailwindcss
+.env
 /tmp/
 /.vagrant/
 /Vagrantfile.local
