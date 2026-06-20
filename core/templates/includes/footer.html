@@ -1,0 +1,47 @@
+{% load static wagtailcore_tags tribu_tags %}
+{% wagtail_site as current_site %}
+{% footer_projets as projets %}
+{% footer_stages as stages %}
+<footer class="min-h-[200px]">
+    <div class="flex md:flex-row flex-col text-center md:text-left lg:gap-16 md:gap-8 gap-8 p-8 max-w-[1300px] w-full mx-auto justify-center text-gray-400 font-light">
+        {# Logo et nom tribu #}
+        <div class="text-3xl font-semibold text-white flex gap-3 items-center justify-center">
+            <img src="{% static 'img/logo-tribu-doya.png' %}" alt="Logo tribu d'oya" class="h-[96px] w-auto">
+            <span>La tribu d'Oya</span>
+        </div>
+        {# Coordonnées #}
+        <div>
+            <h3 class="font-semibold mb-2 text-white">COORDONNEES</h3>
+            <p>35 rue Vergniaud</p>
+            <p class="mb-4">59000 Lille</p>
+        </div>
+        {# Navigation (depuis l'arbre de pages Wagtail) #}
+        <div>
+            <h3 class="font-semibold mb-2 text-white">NAVIGATION</h3>
+            <ul>
+                <li><a href="{% pageurl current_site.root_page %}">Accueil</a></li>
+                {% for item in current_site.root_page.get_children.live.in_menu %}
+                    <li><a href="{% pageurl item %}">{{ item.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {# Les projets #}
+        <div>
+            <h3 class="font-semibold mb-2 text-white">LES PROJETS</h3>
+            <ul>
+                {% for projet in projets %}
+                    <li><a href="{% pageurl projet %}">{{ projet.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {# Les stages #}
+        <div>
+            <h3 class="font-semibold mb-2 text-white">LES STAGES</h3>
+            <ul>
+                {% for stage in stages %}
+                    <li><a href="{% pageurl stage %}">{{ stage.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</footer>

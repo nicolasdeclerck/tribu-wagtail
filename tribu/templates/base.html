@@ -1,0 +1,60 @@
+{% load static wagtailcore_tags wagtailuserbar %}
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>
+            {% block title %}{% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}{% endblock %}{% block title_suffix %}{% wagtail_site as current_site %}{% if current_site and current_site.site_name %} | {{ current_site.site_name }}{% endif %}{% endblock %}
+        </title>
+        {% if page.search_description %}
+        <meta name="description" content="{{ page.search_description }}" />
+        {% endif %}
+        {% block meta_keywords %}{% endblock %}
+        <link rel="canonical" href="{% if page %}{{ page.full_url }}{% endif %}" />
+
+        {# Favicons #}
+        <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/favicon/apple-touch-icon.png' %}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon/favicon-32x32.png' %}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon/favicon-16x16.png' %}">
+        <link rel="manifest" href="{% static 'img/favicon/site.webmanifest' %}">
+        <link rel="shortcut icon" href="{% static 'img/favicon/favicon.ico' %}">
+
+        {# Open Graph / Twitter #}
+        <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
+        <meta property="og:url" content="{% if page %}{{ page.full_url }}{% endif %}" />
+        <meta property="og:title" content="{% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }}{% endif %}" />
+        {% if page.search_description %}<meta property="og:description" content="{{ page.search_description }}" />{% endif %}
+        {% block og_image %}<meta property="og:image" content="https://latribudoya.fr{% static 'img/olympe.png' %}" />{% endblock %}
+        <meta property="twitter:card" content="summary_large_image" />
+
+        {% block extra_head %}{% endblock %}
+
+        {# Compiled Tailwind CSS #}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/app.css' %}">
+        {% block extra_css %}{% endblock %}
+
+        {# Alpine.js (client interactivity) + HTMX (partial loads) #}
+        <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.14.8/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+        <script defer src="{% static 'js/app.js' %}"></script>
+    </head>
+
+    <body
+        class="bg-black text-white opacity-0 transition-opacity duration-700 {% block body_class %}{% endblock %}"
+        x-data
+        x-init="$nextTick(() => $el.classList.remove('opacity-0'))"
+    >
+        {% wagtailuserbar %}
+
+        <main class="{% block main_class %}flex flex-col min-h-screen{% endblock %}">
+            {% include "includes/header.html" %}
+            {% block content %}{% endblock %}
+        </main>
+
+        {% include "includes/footer.html" %}
+
+        {% block extra_js %}{% endblock %}
+    </body>
+</html>

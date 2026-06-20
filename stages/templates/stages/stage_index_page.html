@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<section class="flex-grow flex flex-col gap-16 justify-center items-center w-full max-w-[1300px] mx-auto lg:px-16 p-8">
+    <h1 class="center lg:text-5xl text-3xl">{{ page.title }}</h1>
+    <div class="flex flex-wrap justify-center lg:gap-16 gap-4 w-full">
+        {% for stage in stages %}
+            {% image stage.background_image fill-380x232 as bg %}
+            <div class="bg-white bg-cover bg-center rounded-md h-[232px] w-full lg:w-[380px]" style="background-image: url('{{ bg.url }}');">
+                <div class="lg:p-8 p-4 bg-white bg-opacity-40 text-black space-y-2 rounded-md text-right h-full flex flex-col justify-end items-end">
+                    <h2 class="text-3xl font-semibold">{{ stage.title }}</h2>
+                    <h3>{{ stage.subtitle }}</h3>
+                    <div>{{ stage.credit|richtext }}</div>
+                    {% if stage.has_detail_page %}
+                        <button class="bg-black text-white p-2 rounded-md w-fit">
+                            <a href="{% pageurl stage %}">En savoir plus</a>
+                        </button>
+                    {% else %}
+                        <button class="bg-slate-400 text-white p-2 rounded-md w-fit">Bientôt disponible</button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

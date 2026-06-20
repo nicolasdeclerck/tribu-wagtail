@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    /* Hide Alpine elements until Alpine is ready */
+    [x-cloak] {
+        display: none !important;
+    }
+}

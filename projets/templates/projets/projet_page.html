@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if page.background_image %}{% image page.background_image width-1200 as og %}<meta property="og:image" content="https://latribudoya.fr{{ og.url }}" />{% endif %}{% endblock %}
+
+{% block content %}
+{% image page.background_image fill-1920x1080 as bg %}
+<section class="flex-grow flex flex-col relative">
+    <section class="flex-grow min-w-full lg:p-24 md:p-24 sm:p-8 p-4 bg-cover bg-center relative flex" style="background-image: url('{{ bg.url }}');">
+        <div class="lg:flex lg:gap-8 lg:space-y-0 space-y-5 w-full max-w-[1300px] m-auto">
+            {# Texte #}
+            <div class="bg-white text-black p-8 bg-opacity-90 rounded-md lg:w-[400px] lg:min-w-[400px] space-y-5 h-fit">
+                <h1 class="text-5xl">{{ page.title }}</h1>
+                <h2>{{ page.subtitle }}</h2>
+                <p><strong>Année de création : </strong>{{ page.annee }}</p>
+                <div>{{ page.credit|richtext }}</div>
+                <div class="text-base">{{ page.description|richtext }}</div>
+            </div>
+
+            {# Vidéo YouTube + boutons #}
+            {% if page.youtube_link %}
+            <div class="lg:flex-grow space-y-5 flex flex-col min-h-[500px]">
+                <iframe class="w-full h-full border-4 border-white bg-black rounded-md flex-grow"
+                        src="{{ page.youtube_link }}"
+                        title="YouTube video player"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                <div class="flex gap-5">
+                    <a href="{% slugurl 'reseaux' %}" class="cursor-pointer bg-white text-black p-2 rounded-md w-fit">Contactez-nous</a>
+                    {% if page.press_folder %}
+                    <a class="cursor-pointer bg-white text-black p-2 rounded-md w-fit" href="{{ page.press_folder.url }}">Téléchargez notre dossier de presse</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Galerie d'images (carousel Alpine) #}
+            {% with gallery=page.gallery_images.all %}
+            {% if gallery %}
+            <div
+                class="relative overflow-hidden h-[500px] max-h-[500px] bg-black rounded-md lg:flex-grow"
+                x-data="imageCarousel({{ gallery|length }})"
+                @keydown.window.arrow-left="prev()"
+                @keydown.window.arrow-right="next()"
+                tabindex="0"
+            >
+                <div class="flex transition-transform duration-500 ease-in-out h-full" :style="'transform: translateX(-' + current * 100 + '%)'">
+                    {% for item in gallery %}
+                        {% image item.image max-1200x800 as img %}
+                        <div class="w-full h-full flex-shrink-0 flex items-center justify-center">
+                            <img class="max-h-[500px] max-w-full object-contain" src="{{ img.url }}" alt="{{ page.title }}">
+                        </div>
+                    {% endfor %}
+                </div>
+                <button @click="prev()" aria-label="Image précédente" class="carousel-prev absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 transition-colors z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button @click="next()" aria-label="Image suivante" class="carousel-next absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 transition-colors z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                    {% for item in gallery %}
+                        <button @click="goTo({{ forloop.counter0 }})" aria-label="Aller à l'image {{ forloop.counter }}"
+                                class="w-2 h-2 rounded-full transition-colors"
+                                :class="current === {{ forloop.counter0 }} ? 'bg-white' : 'bg-white/50 hover:bg-white/80'"></button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </section>
+</section>
+{% endblock %}

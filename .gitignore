@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Django / Wagtail
+db.sqlite3
+db.sqlite3-journal
+/media/
+# Collected static (STATIC_ROOT). Source assets live in <app>/static and are kept.
+/static/
+
+# Tailwind standalone binary (downloaded locally, see README)
+/tools/tailwindcss
+
+# Node (only if you opt for the npm-based Tailwind workflow)
+node_modules/
+
+# OS / editors
+.DS_Store
+*.swp
+.idea/
+.vscode/

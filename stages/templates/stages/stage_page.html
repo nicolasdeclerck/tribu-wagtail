@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if page.background_image %}{% image page.background_image width-1200 as og %}<meta property="og:image" content="https://latribudoya.fr{{ og.url }}" />{% endif %}{% endblock %}
+
+{% block content %}
+{% image page.background_image fill-1920x1080 as bg %}
+<section class="flex-grow flex flex-col relative">
+    <section class="flex-grow min-w-full lg:p-24 md:p-16 p-4 bg-cover bg-center relative flex" style="background-image: url('{{ bg.url }}');">
+        <div class="flex flex-col lg:flex-row gap-8 w-full max-w-[1300px] m-auto">
+            {# Colonne gauche : description (75%) #}
+            <div class="lg:w-3/4 bg-white text-black p-8 bg-opacity-90 rounded-md space-y-6">
+                <div>
+                    <h1 class="text-4xl lg:text-5xl font-semibold">{{ page.title }}</h1>
+                    <h2 class="text-xl mt-2 text-gray-600">{{ page.subtitle }}</h2>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Intention</h3>
+                    <div class="text-gray-700">{{ page.intention|richtext }}</div>
+                </div>
+
+                {% if page.youtube_link %}
+                <div class="space-y-5 flex flex-col min-h-[400px]">
+                    <iframe class="w-full h-full border-4 border-white bg-black rounded-md flex-grow"
+                            src="{{ page.youtube_link }}"
+                            title="YouTube video player"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen></iframe>
+                </div>
+                {% endif %}
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Thème</h3>
+                    <div class="text-gray-700">{{ page.theme|richtext }}</div>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Objectifs</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        {% for objectif in page.objectifs.all %}
+                            <li>{{ objectif.texte }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Axes de travail</h3>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        {% for axe in page.axes_travail.all %}
+                            <li>{{ axe.texte }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                {% if page.note %}
+                <div class="bg-gray-100 p-4 rounded-md">
+                    <div class="text-gray-600 italic">{{ page.note|richtext }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Colonne droite : dates (25%) #}
+            <div class="lg:w-1/4">
+                <div class="bg-white text-black p-6 bg-opacity-90 rounded-md sticky top-8">
+                    <h3 class="text-xl font-semibold mb-4">Prochaines dates</h3>
+                    <div class="space-y-4">
+                        {% for date in page.prochaines_dates.all %}
+                            <div class="border-l-4 border-black pl-4">
+                                <p class="font-semibold text-lg">{{ date.date }}</p>
+                                {% if date.horaires %}<p class="text-gray-600">{{ date.horaires }}</p>{% endif %}
+                                {% if date.lieu %}<p class="text-gray-600">{{ date.lieu }}</p>{% endif %}
+                                {% if date.billetterie %}
+                                    <a href="{{ date.billetterie }}" target="_blank" rel="noopener noreferrer" class="inline-block mt-2 bg-black text-white text-sm px-3 py-1 rounded-md hover:bg-gray-800 transition-colors">Réserver</a>
+                                {% endif %}
+                            </div>
+                        {% empty %}
+                            <p class="text-gray-600">Aucune date prévue pour le moment.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+{% endblock %}

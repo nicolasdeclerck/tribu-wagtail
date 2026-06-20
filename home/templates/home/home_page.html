@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block main_class %}flex flex-col h-screen{% endblock %}
+
+{% block content %}
+<section
+    class="flex-grow flex flex-col overflow-hidden relative"
+    x-data="homeCarousel({{ carousel_stages.count|add:carousel_projets.count }})"
+    @keydown.window.arrow-left="prev()"
+    @keydown.window.arrow-right="next()"
+>
+    <div class="flex-grow overflow-hidden relative">
+        <div
+            class="flex h-full transition-transform duration-700 ease-in-out"
+            :style="'transform: translateX(-' + current * 100 + '%)'"
+        >
+            {# Stages first, then projets — legacy carousel order #}
+            {% for stage in carousel_stages %}
+                {% image stage.background_image fill-1600x1000 as bg %}
+                <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative p-4" style="background-image: url('{{ bg.url }}');">
+                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white bg-opacity-80 text-right p-4 rounded-md text-black flex flex-col items-end">
+                        <h2 class="text-5xl">{{ stage.title }}</h2>
+                        <p class="text-lg">{{ stage.type }}</p>
+                        <div class="text-sm">{{ stage.credit|richtext }}</div>
+                        <div class="bg-black p-2 rounded-md text-white w-fit">
+                            <a href="{% pageurl stage %}">En savoir plus</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for projet in carousel_projets %}
+                {% image projet.background_image fill-1600x1000 as bg %}
+                <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative p-4" style="background-image: url('{{ bg.url }}');">
+                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white bg-opacity-80 text-right p-4 rounded-md text-black flex flex-col items-end">
+                        <h2 class="text-5xl">{{ projet.title }}</h2>
+                        <p class="text-lg">{{ projet.subtitle }}</p>
+                        <div class="text-sm">{{ projet.credit|richtext }}</div>
+                        {% if projet.is_in_progress %}
+                            <div class="bg-slate-200 p-2 rounded-md text-slate-600 w-fit">En cours de création</div>
+                        {% else %}
+                            <div class="bg-black p-2 rounded-md text-white w-fit">
+                                <a href="{% pageurl projet %}">En savoir plus</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {# Controls #}
+        <div class="hidden md:block">
+            <button
+                @click="prev()"
+                aria-label="Slide précédente"
+                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-black p-4 rounded-full transition-all duration-200 z-10"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button
+                @click="next()"
+                aria-label="Slide suivante"
+                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-black p-4 rounded-full transition-all duration-200 z-10"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+{# Static content for search engines #}
+<div class="sr-only" aria-hidden="true">
+    <h1>La tribu d'Oya - Compagnie de théâtre engagée</h1>
+    {{ page.intro|richtext }}
+    <h2>Nos stages</h2>
+    {% for stage in carousel_stages %}
+        <article>
+            <h3>{{ stage.title }}</h3>
+            <p>{{ stage.description_courte }}</p>
+        </article>
+    {% endfor %}
+    <h2>Nos spectacles</h2>
+    {% for projet in carousel_projets %}
+        <article>
+            <h3>{{ projet.title }} - {{ projet.annee }}</h3>
+            <div>{{ projet.description|richtext }}</div>
+        </article>
+    {% endfor %}
+</div>
+{% endblock %}

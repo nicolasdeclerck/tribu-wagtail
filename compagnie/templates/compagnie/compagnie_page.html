@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<section class="flex-grow flex flex-col">
+    <div class="flex-grow lg:grid lg:grid-cols-2 grid grid-cols-1 lg:gap-32 gap-8 w-full max-w-[1300px] mx-auto md:p-8 p-4 items-center">
+        <div class="bg-white md:p-8 p-4 text-black space-y-8 h-fit rounded-md">
+            <h1 class="text-5xl font-semibold">{{ page.title }}</h1>
+            <div class="space-y-4">{{ page.body|richtext }}</div>
+        </div>
+        <div class="text-center h-fit rounded-md">
+            <div class="h-full p-8 space-y-5">
+                <h2 class="text-5xl font-semibold">L'équipe</h2>
+                <p class="text-xs italic">Cliquez pour lire la bio</p>
+                <div class="grid grid-cols-2 gap-16 place-content-between">
+                    {% for membre in membres %}
+                        <div class="flex justify-center">
+                            <a href="{% pageurl membre %}">
+                                {% image membre.photo width-300 as photo %}
+                                <img loading="lazy" src="{{ photo.url }}" alt="Photo de {{ membre.title }}">
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
