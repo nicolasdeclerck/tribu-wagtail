@@ -160,3 +160,4 @@ puis passer `DJANGO_SECURE_SSL_REDIRECT=true` dans `.env`. Le header
 git pull
 docker compose up -d --build   # rebuild (recompile le CSS) + migrations auto au boot
 ```
+# tribu-wagtail
