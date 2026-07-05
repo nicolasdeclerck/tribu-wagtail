@@ -8,3 +8,155 @@
         display: none !important;
     }
 }
+
+@layer components {
+    /* Bouton « liquid glass » teinté (jaune secondaire), commun à tout le site.
+       La taille (padding / police) reste portée par chaque bouton. */
+    .btn-glass {
+        @apply inline-block bg-secondary/60 backdrop-blur-md backdrop-saturate-150
+               border border-white/40 shadow-lg text-black rounded-full
+               font-semibold hover:bg-secondary/80 transition-colors;
+    }
+}
+
+/* -------------------------------------------------------------------------
+   Effets de survol d'image (bibliothèque izmir, ciar4n) :
+   - image « pan-right » : zoomée au repos, glisse vers la droite au survol ;
+   - bordure « ccc-1 » : un trait blanc qui se dessine en continu autour de
+     l'image (gauche → bas → droite → haut) ;
+   - légende révélée en overlay.
+   Déclenché au survol, au focus clavier, et au clic/tap (classe `hover`
+   basculée par Alpine). Règles écrites en clair : non purgées par Tailwind.
+   ------------------------------------------------------------------------- */
+.c4-izmir {
+    position: relative;
+    display: block;
+    overflow: hidden;
+}
+.c4-izmir img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 600ms ease;
+}
+
+/* Légende : overlay sombre + texte, révélé au survol */
+.c4-izmir figcaption {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5em;
+    color: #fff;
+}
+.c4-izmir .c4-caption {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5em;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 600ms ease;
+}
+.c4-izmir.hover .c4-caption,
+.c4-izmir:hover .c4-caption,
+.c4-izmir:focus .c4-caption,
+.c4-izmir:focus-within .c4-caption {
+    opacity: 1;
+}
+
+/* Effet image « pan-right » */
+.c4-image-pan-right img {
+    transform-origin: right;
+    transform: scale(1.2) translate(0, 0);
+}
+.c4-image-pan-right.hover img,
+.c4-image-pan-right:hover img,
+.c4-image-pan-right:focus img,
+.c4-image-pan-right:focus-within img {
+    transform: scale(1.2) translate(15%, 0);
+}
+
+/* Bordure qui se dessine « ccc-1 » : 4 barres (haut/bas via ::before/::after
+   de la figure, gauche/droite via ::before/::after de figcaption) qui se
+   déploient en séquence continue. */
+.c4-izmir::before,
+.c4-izmir::after,
+.c4-izmir figcaption::before,
+.c4-izmir figcaption::after {
+    content: "";
+    position: absolute;
+    background-color: #fff;
+    transition: transform 400ms ease;
+}
+.c4-izmir::before,
+.c4-izmir::after {
+    z-index: 1;
+    height: 3px;
+    left: 15px;
+    right: 15px;
+    transform: scaleX(0);
+}
+.c4-izmir::before {
+    top: 15px;
+    transform-origin: 100% 100%;
+    transition-delay: 0s;
+}
+.c4-izmir::after {
+    bottom: 15px;
+    transform-origin: 0 0;
+    transition-delay: 600ms;
+}
+.c4-izmir figcaption::before,
+.c4-izmir figcaption::after {
+    z-index: -1;
+    width: 3px;
+    top: 15px;
+    bottom: 15px;
+    transform: scaleY(0);
+}
+.c4-izmir figcaption::before {
+    left: 15px;
+    transform-origin: 0 0;
+    transition-delay: 900ms;
+}
+.c4-izmir figcaption::after {
+    right: 15px;
+    transform-origin: 100% 100%;
+    transition-delay: 300ms;
+}
+/* Survol / focus / clic : déploiement des barres avec délais en cascade */
+.c4-izmir.hover::before,
+.c4-izmir:hover::before,
+.c4-izmir:focus::before,
+.c4-izmir:focus-within::before {
+    transform: scaleX(1);
+    transition-delay: 900ms;
+}
+.c4-izmir.hover::after,
+.c4-izmir:hover::after,
+.c4-izmir:focus::after,
+.c4-izmir:focus-within::after {
+    transform: scaleX(1);
+    transition-delay: 300ms;
+}
+.c4-izmir.hover figcaption::before,
+.c4-izmir:hover figcaption::before,
+.c4-izmir:focus figcaption::before,
+.c4-izmir:focus-within figcaption::before {
+    transform: scaleY(1);
+    transition-delay: 0s;
+}
+.c4-izmir.hover figcaption::after,
+.c4-izmir:hover figcaption::after,
+.c4-izmir:focus figcaption::after,
+.c4-izmir:focus-within figcaption::after {
+    transform: scaleY(1);
+    transition-delay: 600ms;
+}

@@ -13,9 +13,7 @@
                     <h3>{{ stage.subtitle }}</h3>
                     <div>{{ stage.credit|richtext }}</div>
                     {% if stage.has_detail_page %}
-                        <button class="bg-black text-white p-2 rounded-md w-fit">
-                            <a href="{% pageurl stage %}">En savoir plus</a>
-                        </button>
+                        <a href="{% pageurl stage %}" class="btn-glass px-4 py-2 w-fit">En savoir plus</a>
                     {% else %}
                         <button class="bg-slate-400 text-white p-2 rounded-md w-fit">Bientôt disponible</button>
                     {% endif %}

@@ -8,11 +8,20 @@ module.exports = {
     "./stages/templates/**/*.html",
     "./compagnie/templates/**/*.html",
     "./reseaux/templates/**/*.html",
+    "./contact/templates/**/*.html",
     "./search/templates/**/*.html",
     "./core/static/js/**/*.js",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Couleur secondaire de la marque : le jaune du logo « la tribu d'Oya ».
+        secondary: "#f3d159",
+      },
+    },
   },
-  plugins: [],
+  plugins: [
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/forms"),
+  ],
 };

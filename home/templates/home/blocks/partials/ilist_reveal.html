@@ -1,0 +1,24 @@
+{% comment %}
+  Détail dépliable d'un item de « Liste interactive », rendu SOUS le titre.
+  Repli/dépli animé via une transition sur grid-template-rows (0fr → 1fr),
+  piloté par Alpine (`active`). Sur mobile l'image est affichée ici (en
+  premier) ; sur desktop elle est masquée (rendue dans le volet de droite).
+  `item` = StructValue de l'item, `index` = indice 0-based.
+{% endcomment %}
+{% load wagtailcore_tags wagtailimages_tags %}
+{% if item.image or item.subtitle or item.content %}
+<div class="grid transition-[grid-template-rows] duration-300 ease-in-out"
+     :class="active === {{ index }} ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'">
+    <div class="overflow-hidden">
+        <div class="pt-3 flex flex-col gap-3">
+            {% if item.image %}
+            <div class="lg:hidden">
+                {% image item.image fill-800x600 class="w-full h-auto rounded-md" %}
+            </div>
+            {% endif %}
+            {% if item.subtitle %}<p class="text-lg text-white/80">{{ item.subtitle }}</p>{% endif %}
+            {% if item.content %}<div class="prose prose-invert max-w-none">{{ item.content|richtext }}</div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}

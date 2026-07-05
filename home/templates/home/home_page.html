@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static wagtailcore_tags wagtailimages_tags %}
 
-{% block main_class %}flex flex-col h-screen{% endblock %}
+{% block main_class %}flex flex-col min-h-screen{% endblock %}
 
 {% block content %}
 <section
-    class="flex-grow flex flex-col overflow-hidden relative"
-    x-data="homeCarousel({{ carousel_stages.count|add:carousel_projets.count }})"
+    class="flex flex-col overflow-hidden relative h-[calc(100vh-88px)]"
+    x-data="homeCarousel({{ page.carousel_items.count }})"
     @keydown.window.arrow-left="prev()"
     @keydown.window.arrow-right="next()"
 >
@@ -15,33 +15,15 @@
             class="flex h-full transition-transform duration-700 ease-in-out"
             :style="'transform: translateX(-' + current * 100 + '%)'"
         >
-            {# Stages first, then projets — legacy carousel order #}
-            {% for stage in carousel_stages %}
-                {% image stage.background_image fill-1600x1000 as bg %}
+            {% for item in page.carousel_items.all %}
+                {% image item.background_image fill-1600x1000 as bg %}
                 <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative p-4" style="background-image: url('{{ bg.url }}');">
-                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white bg-opacity-80 text-right p-4 rounded-md text-black flex flex-col items-end">
-                        <h2 class="text-5xl">{{ stage.title }}</h2>
-                        <p class="text-lg">{{ stage.type }}</p>
-                        <div class="text-sm">{{ stage.credit|richtext }}</div>
-                        <div class="bg-black p-2 rounded-md text-white w-fit">
-                            <a href="{% pageurl stage %}">En savoir plus</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-            {% for projet in carousel_projets %}
-                {% image projet.background_image fill-1600x1000 as bg %}
-                <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative p-4" style="background-image: url('{{ bg.url }}');">
-                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white bg-opacity-80 text-right p-4 rounded-md text-black flex flex-col items-end">
-                        <h2 class="text-5xl">{{ projet.title }}</h2>
-                        <p class="text-lg">{{ projet.subtitle }}</p>
-                        <div class="text-sm">{{ projet.credit|richtext }}</div>
-                        {% if projet.is_in_progress %}
-                            <div class="bg-slate-200 p-2 rounded-md text-slate-600 w-fit">En cours de création</div>
-                        {% else %}
-                            <div class="bg-black p-2 rounded-md text-white w-fit">
-                                <a href="{% pageurl projet %}">En savoir plus</a>
-                            </div>
+                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white/40 backdrop-blur-lg backdrop-saturate-150 border border-white/50 shadow-xl text-right p-5 rounded-2xl text-black flex flex-col items-end">
+                        <h2 class="text-5xl">{{ item.title }}</h2>
+                        {% if item.subtitle %}<p class="text-lg">{{ item.subtitle }}</p>{% endif %}
+                        {% if item.description %}<div class="text-sm">{{ item.description|richtext }}</div>{% endif %}
+                        {% if item.link_page and item.button_text %}
+                            <a href="{% pageurl item.link_page %}" class="btn-glass px-4 py-2 w-fit">{{ item.button_text }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -70,21 +52,43 @@
             </button>
         </div>
     </div>
+
+    {% if page.custom_section %}
+    {# Indicateur « défiler vers le bas » : visible seulement s'il y a du contenu dessous. #}
+    <a href="#custom-section"
+       @click.prevent="document.getElementById('custom-section').scrollIntoView({ behavior: 'smooth' })"
+       aria-label="Défiler vers le bas"
+       class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-white/90 hover:text-white transition-colors animate-bounce">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+    </a>
+    {% endif %}
 </section>
+
+{% if page.custom_section %}
+<section id="custom-section" class="bg-black text-white">
+    <div class="max-w-6xl mx-auto px-5 py-16 flex flex-col gap-12">
+        {% for block in page.custom_section %}
+            {% include_block block %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 
 {# Static content for search engines #}
 <div class="sr-only" aria-hidden="true">
     <h1>La tribu d'Oya - Compagnie de théâtre engagée</h1>
     {{ page.intro|richtext }}
     <h2>Nos stages</h2>
-    {% for stage in carousel_stages %}
+    {% for stage in seo_stages %}
         <article>
             <h3>{{ stage.title }}</h3>
             <p>{{ stage.description_courte }}</p>
         </article>
     {% endfor %}
     <h2>Nos spectacles</h2>
-    {% for projet in carousel_projets %}
+    {% for projet in seo_projets %}
         <article>
             <h3>{{ projet.title }} - {{ projet.annee }}</h3>
             <div>{{ projet.description|richtext }}</div>

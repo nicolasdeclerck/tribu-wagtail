@@ -29,9 +29,9 @@
                         referrerpolicy="strict-origin-when-cross-origin"
                         allowfullscreen></iframe>
                 <div class="flex gap-5">
-                    <a href="{% slugurl 'reseaux' %}" class="cursor-pointer bg-white text-black p-2 rounded-md w-fit">Contactez-nous</a>
+                    <a href="{% slugurl 'reseaux' %}" class="btn-glass cursor-pointer px-4 py-2 w-fit">Contactez-nous</a>
                     {% if page.press_folder %}
-                    <a class="cursor-pointer bg-white text-black p-2 rounded-md w-fit" href="{{ page.press_folder.url }}">Téléchargez notre dossier de presse</a>
+                    <a class="btn-glass cursor-pointer px-4 py-2 w-fit" href="{{ page.press_folder.url }}">Téléchargez notre dossier de presse</a>
                     {% endif %}
                 </div>
             </div>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-5 py-16 flex flex-col gap-8">
+    <header class="flex flex-col gap-4">
+        <h1 class="text-4xl md:text-5xl font-semibold">{{ page.title }}</h1>
+        {% if page.intro %}
+            <div class="prose prose-invert max-w-none">{{ page.intro|richtext }}</div>
+        {% endif %}
+    </header>
+
+    <form action="{% pageurl page %}" method="POST"
+          class="flex flex-col gap-5
+                 [&_label]:block [&_label]:font-medium [&_label]:mb-1
+                 [&_input:not([type=checkbox]):not([type=radio])]:w-full
+                 [&_textarea]:w-full [&_select]:w-full
+                 [&_input]:rounded-md [&_textarea]:rounded-md [&_select]:rounded-md
+                 [&_input]:border-white/20 [&_textarea]:border-white/20 [&_select]:border-white/20
+                 [&_input]:bg-white [&_textarea]:bg-white [&_select]:bg-white
+                 [&_input]:text-black [&_textarea]:text-black [&_select]:text-black
+                 [&_.help]:text-sm [&_.help]:text-white/60 [&_.help]:mt-1">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="rounded-md bg-red-500/20 border border-red-400/40 p-3 text-red-200">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+        {% for field in form.visible_fields %}
+            <div>
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}{% if field.field.required %} <span class="text-red-300">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+                {% if field.errors %}
+                    <ul class="text-sm text-red-300 mt-1">
+                        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div>
+            <button type="submit" class="btn-glass px-6 py-2.5">
+                Envoyer
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

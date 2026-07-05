@@ -1,0 +1,17 @@
+{% comment %}
+  Bloc de structure « Colonnes (2 à 4) ».
+  Grille responsive : 1 colonne sur mobile, puis 2/3/4 selon le nombre de
+  colonnes. Les classes de grille sont écrites EN CLAIR (et non assemblées
+  dynamiquement) pour que Tailwind ne les purge pas au build.
+  `count` = nombre de colonnes (fourni par get_context).
+{% endcomment %}
+{% load wagtailcore_tags %}
+<div class="grid gap-8 grid-cols-1{% if count == 2 %} md:grid-cols-2{% elif count == 3 %} sm:grid-cols-2 lg:grid-cols-3{% elif count >= 4 %} sm:grid-cols-2 lg:grid-cols-4{% endif %}">
+    {% for column in self.columns %}
+    <div class="flex flex-col gap-6">
+        {% for block in column %}
+            {% include_block block %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>

@@ -1,0 +1,57 @@
+{% comment %}
+  Liste interactive à deux volets (Tailwind + Alpine).
+  - Desktop (≥1024px) : titres à gauche ; au survol/focus d'un titre son détail
+    (sous-titre + texte) se déplie sous le titre et son image s'affiche en fondu
+    dans le volet de droite (une seule image visible à la fois).
+  - Mobile / tablette : un appui sur le titre déplie tout le détail sous celui-ci
+    (image en premier, puis textes) ; le volet droit est masqué.
+  Le 1er item est actif par défaut (`active: 0`), donc correct même sans JS.
+{% endcomment %}
+{% load wagtailcore_tags wagtailimages_tags %}
+<div x-data="{ active: 0 }"
+     class="w-full grid gap-8 items-center{% if has_image %} lg:grid-cols-2{% endif %}">
+    <ul class="flex flex-col" data-aos="fade-right">
+        {% for item in self.items %}
+        <li>
+            {% if item.link_page %}
+            <a href="{% pageurl item.link_page %}"
+               class="block py-4 border-white/15 {% if not forloop.first %}border-t{% endif %}"
+               @mouseenter="active = {{ forloop.counter0 }}"
+               @focus="active = {{ forloop.counter0 }}">
+                <h3 class="text-2xl md:text-3xl flex items-center gap-2 transition-opacity duration-200"
+                    :class="active === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-60'">
+                    <span>{{ item.title }}</span>
+                    <span aria-hidden="true" class="transition-transform duration-200"
+                          :class="active === {{ forloop.counter0 }} ? 'translate-x-1' : 'opacity-0'">&rarr;</span>
+                </h3>
+                {% include "home/blocks/partials/ilist_reveal.html" with item=item index=forloop.counter0 %}
+            </a>
+            {% else %}
+            <div tabindex="0"
+                 class="block py-4 border-white/15 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-sm {% if not forloop.first %}border-t{% endif %}"
+                 @mouseenter="active = {{ forloop.counter0 }}"
+                 @focus="active = {{ forloop.counter0 }}"
+                 @click="active = {{ forloop.counter0 }}"
+                 @keydown.enter.prevent="active = {{ forloop.counter0 }}">
+                <h3 class="text-2xl md:text-3xl transition-opacity duration-200"
+                    :class="active === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-60'">{{ item.title }}</h3>
+                {% include "home/blocks/partials/ilist_reveal.html" with item=item index=forloop.counter0 %}
+            </div>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% if has_image %}
+    <div class="hidden lg:block sticky top-8 relative aspect-[4/3] rounded-md overflow-hidden bg-white/5" data-aos="fade-left">
+        {% for item in self.items %}
+            {% if item.image %}
+            <div class="absolute inset-0 transition-opacity duration-500 ease-in-out"
+                 :class="active === {{ forloop.counter0 }} ? 'opacity-100' : 'opacity-0'">
+                {% image item.image fill-800x600 class="w-full h-full object-cover" %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

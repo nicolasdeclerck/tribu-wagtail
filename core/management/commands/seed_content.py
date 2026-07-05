@@ -52,6 +52,9 @@ class Command(BaseCommand):
         self.seed_projets()
         self.seed_stages()
         self.seed_reseaux()
+        self.seed_contact()
+        # Carousel après les stages/projets : il réutilise leurs pages/images.
+        self.seed_carousel()
         self.stdout.write(self.style.SUCCESS("Done."))
 
     # ---- helpers -----------------------------------------------------------
@@ -115,6 +118,36 @@ class Command(BaseCommand):
             "femmes et les hommes et le respect des droits des femmes.</p>"
         )
         self.home.save()
+        self.publish(self.home)
+
+    def seed_carousel(self):
+        """(Ré)génère les items du carrousel : stages puis projets (ordre legacy)."""
+        from home.models import CarouselItem
+        from projets.models import ProjetPage
+        from stages.models import StagePage
+
+        self.home.carousel_items.all().delete()
+
+        for stage in StagePage.objects.live().order_by("ordre"):
+            CarouselItem.objects.create(
+                page=self.home,
+                title=stage.title,
+                subtitle=stage.type,
+                description=stage.credit,
+                background_image=stage.background_image,
+                button_text="En savoir plus",
+                link_page=stage,
+            )
+        for projet in ProjetPage.objects.live().order_by("ordre"):
+            CarouselItem.objects.create(
+                page=self.home,
+                title=projet.title,
+                subtitle=projet.subtitle,
+                description=projet.credit,
+                background_image=projet.background_image,
+                button_text="" if projet.is_in_progress else "En savoir plus",
+                link_page=None if projet.is_in_progress else projet,
+            )
         self.publish(self.home)
 
     # ---- projets -----------------------------------------------------------
@@ -467,4 +500,45 @@ class Command(BaseCommand):
                 "helloasso_url": "https://www.helloasso.com/associations/la-tribu-d-oya",
             },
         )
+        self.publish(page)
+
+    def seed_contact(self):
+        """Crée la page de contact (form builder natif) avec des champs par
+        défaut. Idempotent : les champs ne sont ajoutés que s'il n'y en a pas."""
+        from contact.models import FormField, FormPage
+
+        page = self.upsert(
+            self.home,
+            FormPage,
+            "contact",
+            {
+                "title": "Contact",
+                "show_in_menus": True,
+                "seo_title": "Contact - La tribu d'Oya",
+                "search_description": (
+                    "Contactez la compagnie de théâtre La tribu d'Oya."
+                ),
+                "intro": "<p>Une question, un projet ? Écrivez-nous.</p>",
+                "thank_you_text": (
+                    "<p>Merci pour votre message, nous vous répondrons "
+                    "rapidement.</p>"
+                ),
+                "from_address": "no-reply@latribudoya.fr",
+                "to_address": "contact@latribudoya.fr",
+                "subject": "Nouveau message depuis le site",
+            },
+        )
+        if not page.form_fields.exists():
+            FormField.objects.create(
+                page=page, sort_order=0, label="Nom",
+                field_type="singleline", required=True,
+            )
+            FormField.objects.create(
+                page=page, sort_order=1, label="Email",
+                field_type="email", required=True,
+            )
+            FormField.objects.create(
+                page=page, sort_order=2, label="Message",
+                field_type="multiline", required=True,
+            )
         self.publish(page)

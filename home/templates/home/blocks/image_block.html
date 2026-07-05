@@ -1,0 +1,22 @@
+{% comment %}
+  Bloc image avec effets izmir : image « pan-right » + bordure qui se dessine
+  (ccc-1) + légende en overlay.
+  - Survol / focus clavier : effets CSS purs (cf. input.css).
+  - Clic / tap (mobile sans survol) : Alpine bascule la classe `hover`.
+  La <figcaption> est toujours rendue : ses pseudo-éléments portent les barres
+  gauche/droite de la bordure animée.
+{% endcomment %}
+{% load wagtailimages_tags %}
+<figure class="c4-izmir c4-image-pan-right rounded-md w-full"
+        data-aos="fade-up"
+        tabindex="0"
+        x-data="{ on: false }"
+        @click="on = !on"
+        :class="{ hover: on }">
+    {% image self.image width-1200 %}
+    <figcaption>
+        {% if self.caption %}
+            <span class="c4-caption"><span class="text-lg font-semibold">{{ self.caption }}</span></span>
+        {% endif %}
+    </figcaption>
+</figure>

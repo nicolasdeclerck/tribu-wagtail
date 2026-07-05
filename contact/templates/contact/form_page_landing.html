@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-5 py-24 flex flex-col gap-6 items-start">
+    <h1 class="text-4xl md:text-5xl font-semibold">Merci !</h1>
+    {% if page.thank_you_text %}
+        <div class="prose prose-invert max-w-none">{{ page.thank_you_text|richtext }}</div>
+    {% else %}
+        <p class="text-lg text-white/80">Votre message a bien été envoyé.</p>
+    {% endif %}
+    <a href="{% pageurl page.get_parent %}" class="btn-glass px-6 py-2.5">
+        Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% load static wagtailcore_tags %}
 {% wagtail_site as current_site %}
-<header class="min-h-[80px]">
+<header class="sticky top-0 z-50 min-h-[80px] bg-black/30 backdrop-blur-lg backdrop-saturate-150 border-b border-white/10">
     <div class="flex justify-between items-center p-5 z-50" x-data="{ open: false }">
         <div class="md:text-4xl text-2xl font-semibold flex gap-4 items-center">
             <img src="{% static 'img/logo-tribu-doya.png' %}" alt="Logo tribu d'oya" class="h-[48px] w-auto">

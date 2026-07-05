@@ -13,9 +13,7 @@
                     <h3>{{ projet.subtitle }}</h3>
                     <p>Année de création : {{ projet.annee }}</p>
                     {% if projet.has_detail_page %}
-                        <button class="bg-black text-white p-2 rounded-md w-fit">
-                            <a href="{% pageurl projet %}">En savoir plus</a>
-                        </button>
+                        <a href="{% pageurl projet %}" class="btn-glass px-4 py-2 w-fit">En savoir plus</a>
                     {% else %}
                         <button class="bg-slate-400 text-white p-2 rounded-md w-fit">En cours de création</button>
                     {% endif %}

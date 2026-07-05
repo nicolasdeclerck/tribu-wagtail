@@ -1,3 +1,17 @@
+// AOS (Animate On Scroll) : les éléments portant un attribut `data-aos`
+// (ex. data-aos="fade-up") s'animent à leur entrée dans le viewport.
+// Animation jouée une seule fois, désactivée si l'utilisateur préfère réduire
+// les animations. aos.js est chargé avant ce fichier (cf. base.html).
+if (window.AOS) {
+    AOS.init({
+        once: true,
+        duration: 700,
+        easing: "ease-out-cubic",
+        disable: () =>
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    });
+}
+
 // Alpine.js components for La tribu d'Oya.
 // Registered on `alpine:init` so they are available before Alpine starts.
 

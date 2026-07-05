@@ -1,0 +1,7 @@
+{% comment %}
+  Bloc « Texte riche » avec taille réglable.
+  La taille est mappée sur les modificateurs prose-* du plugin typography ;
+  classes écrites EN CLAIR pour ne pas être purgées par Tailwind.
+{% endcomment %}
+{% load wagtailcore_tags %}
+<div class="prose prose-invert max-w-none {% if self.size == 'sm' %}prose-sm{% elif self.size == 'lg' %}prose-lg{% elif self.size == 'xl' %}prose-xl{% else %}prose-base{% endif %}" data-aos="fade-up">{{ self.text|richtext }}</div>

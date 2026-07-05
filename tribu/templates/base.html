@@ -32,19 +32,20 @@
 
         {# Compiled Tailwind CSS #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/app.css' %}">
+        {# AOS — apparitions au défilement (Animate On Scroll) #}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/aos.css' %}">
         {% block extra_css %}{% endblock %}
 
-        {# Alpine.js (client interactivity) + HTMX (partial loads) #}
+        {# Alpine.js (client interactivity) + HTMX (partial loads) + AOS #}
         <script defer src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.14.8/dist/cdn.min.js"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+        <script defer src="{% static 'js/aos.js' %}"></script>
         <script defer src="{% static 'js/app.js' %}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     </head>
 
     <body
-        class="bg-black text-white opacity-0 transition-opacity duration-700 {% block body_class %}{% endblock %}"
-        x-data
-        x-init="$nextTick(() => $el.classList.remove('opacity-0'))"
+        class="bg-black text-white {% block body_class %}{% endblock %}"
     >
         {% wagtailuserbar %}
 

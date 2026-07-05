@@ -1,0 +1,9 @@
+{% load wagtailcore_tags %}
+{% if self.link_page or self.url %}
+<div class="text-center" data-aos="fade-up">
+    <a href="{% if self.link_page %}{% pageurl self.link_page %}{% else %}{{ self.url }}{% endif %}"
+       class="btn-glass {% if self.size == 'sm' %}text-sm px-4 py-1.5{% elif self.size == 'lg' %}text-xl px-6 py-3{% elif self.size == 'xl' %}text-3xl px-8 py-4{% else %}text-base px-5 py-2{% endif %}">
+        {{ self.text }}
+    </a>
+</div>
+{% endif %}
