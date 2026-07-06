@@ -38,6 +38,15 @@ jobs:
             docker image prune -f
 
             echo "==> Vérification santé"
-            sleep 8
             docker compose -p tribu ps
-            curl -fsS -o /dev/null -m 15 https://latribudoya.fr/ && echo "Site OK ✅"
+            # gunicorn ne répond qu'après migrate + collectstatic (entrypoint) :
+            # on poll jusqu'à 90 s avant de déclarer un échec.
+            for i in $(seq 1 18); do
+              code=$(curl -4 -s -o /dev/null -m 10 -w "%{http_code}" https://latribudoya.fr/ || echo 000)
+              if [ "$code" = "200" ]; then echo "Site OK ✅ (HTTP 200)"; exit 0; fi
+              echo "  tentative $i/18 → HTTP $code, nouvel essai dans 5 s…"
+              sleep 5
+            done
+            echo "❌ Le site ne répond pas 200 après 90 s"
+            docker compose -p tribu logs --tail 50 web
+            exit 1
