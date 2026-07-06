@@ -50,6 +50,11 @@ class ProjetPage(Page):
     )
     credit = RichTextField("Crédits", blank=True, features=CREDIT_FEATURES)
     description = RichTextField(blank=True)
+    dossier_artistique_url = models.URLField(
+        "Lien dossier artistique", blank=True,
+        help_text="Lien externe vers le dossier artistique (affiché sous la "
+        "description dans la bannière).",
+    )
     youtube_link = models.URLField(
         "Lien YouTube (embed)", blank=True,
         help_text="URL d'intégration, ex: https://www.youtube.com/embed/XXXX",
@@ -68,6 +73,10 @@ class ProjetPage(Page):
         help_text="Si coché, le projet s'affiche sans page de détail "
         "(badge « En cours de création »).",
     )
+    infos_complementaires = RichTextField(
+        "Informations complémentaires", blank=True,
+        help_text="Bloc de texte riche affiché en bas de la page.",
+    )
 
     parent_page_types = ["projets.ProjetIndexPage"]
     subpage_types = []
@@ -85,14 +94,19 @@ class ProjetPage(Page):
         FieldPanel("background_image"),
         FieldPanel("credit"),
         FieldPanel("description"),
+        FieldPanel("dossier_artistique_url"),
+        InlinePanel("representations", label="Prochaines représentations"),
+        InlinePanel("acteurs", label="Distribution (acteur·rice·s)"),
         FieldPanel("youtube_link"),
         FieldPanel("press_folder"),
         InlinePanel("gallery_images", label="Galerie d'images"),
+        FieldPanel("infos_complementaires"),
     ]
 
     search_fields = Page.search_fields + [
         index.SearchField("description"),
         index.SearchField("credit"),
+        index.SearchField("infos_complementaires"),
     ]
 
     @property
@@ -114,3 +128,46 @@ class ProjetGalleryImage(Orderable):
     )
 
     panels = [FieldPanel("image")]
+
+
+class ProjetRepresentation(Orderable):
+    """Une prochaine représentation du spectacle (date, lieu, billetterie)."""
+
+    page = ParentalKey(
+        ProjetPage, on_delete=models.CASCADE, related_name="representations"
+    )
+    date = models.CharField(max_length=255)
+    lieu = models.CharField(max_length=255, blank=True)
+    billetterie = models.URLField("Lien billetterie", blank=True)
+
+    panels = [
+        FieldPanel("date"),
+        FieldPanel("lieu"),
+        FieldPanel("billetterie"),
+    ]
+
+
+class ProjetActeur(Orderable):
+    """Un·e acteur·rice de la distribution (photo + nom)."""
+
+    page = ParentalKey(
+        ProjetPage, on_delete=models.CASCADE, related_name="acteurs"
+    )
+    nom = models.CharField(max_length=255)
+    photo = models.ForeignKey(
+        "wagtailimages.Image",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    copyright = models.CharField(
+        "Copyright / crédit photo", max_length=255, blank=True,
+        help_text="Affiché en surimpression de la photo (ex. « © Nom du photographe »).",
+    )
+
+    panels = [
+        FieldPanel("photo"),
+        FieldPanel("copyright"),
+        FieldPanel("nom"),
+    ]

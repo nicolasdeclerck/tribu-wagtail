@@ -55,19 +55,4 @@ document.addEventListener("alpine:init", () => {
             this.current = index;
         },
     }));
-
-    // Image gallery carousel (projet detail page).
-    Alpine.data("imageCarousel", (total = 0) => ({
-        current: 0,
-        total: total,
-        next() {
-            this.current = (this.current + 1) % this.total;
-        },
-        prev() {
-            this.current = (this.current - 1 + this.total) % this.total;
-        },
-        goTo(index) {
-            this.current = index;
-        },
-    }));
 });
