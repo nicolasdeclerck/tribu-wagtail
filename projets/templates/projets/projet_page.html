@@ -61,7 +61,7 @@
         {% for rep in representations %}
         <li class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white/5 border border-white/10 rounded-lg p-5">
             <div class="sm:flex-grow space-y-1">
-                <h3 class="text-xl font-semibold">{{ rep.date }}</h3>
+                <h3 class="text-xl font-semibold">{{ rep.date }}{% if rep.horaire %} <span class="text-white/80 font-normal">— {{ rep.horaire }}</span>{% endif %}</h3>
                 {% if rep.lieu %}<p class="text-white/70">{{ rep.lieu }}</p>{% endif %}
             </div>
             {% if rep.billetterie %}

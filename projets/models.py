@@ -131,17 +131,19 @@ class ProjetGalleryImage(Orderable):
 
 
 class ProjetRepresentation(Orderable):
-    """Une prochaine représentation du spectacle (date, lieu, billetterie)."""
+    """Une prochaine représentation du spectacle (date, horaire, lieu, billetterie)."""
 
     page = ParentalKey(
         ProjetPage, on_delete=models.CASCADE, related_name="representations"
     )
     date = models.CharField(max_length=255)
+    horaire = models.CharField(max_length=255, blank=True)
     lieu = models.CharField(max_length=255, blank=True)
     billetterie = models.URLField("Lien billetterie", blank=True)
 
     panels = [
         FieldPanel("date"),
+        FieldPanel("horaire"),
         FieldPanel("lieu"),
         FieldPanel("billetterie"),
     ]
