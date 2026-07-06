@@ -29,17 +29,69 @@ services:
     expose:
       - "8000"
 
+  # nginx sert /static et /media et proxifie vers gunicorn.
+  # Il n'expose plus de port sur l'hôte : Traefik termine le TLS et route vers lui
+  # via le réseau externe partagé « n8n-traefik ».
   nginx:
     image: nginx:1.27-bookworm
     restart: unless-stopped
     depends_on:
       - web
-    ports:
-      - "${NGINX_PORT:-80}:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - static:/app/static:ro
       - media:/app/media:ro
+    networks:
+      - default      # pour joindre « web » et « db »
+      - traefik      # pour être joignable par Traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=n8n-traefik_default"
+
+      # --- Apex (canonique) : router HTTPS --------------------------------
+      # Django/Wagtail sert tout le site ; nginx sert en amont /static et /media.
+      - "traefik.http.routers.tribu.rule=Host(`${DOMAIN:?DOMAIN is required}`)"
+      - "traefik.http.routers.tribu.entrypoints=websecure"
+      - "traefik.http.routers.tribu.tls=true"
+      - "traefik.http.routers.tribu.tls.certresolver=myresolver"
+      - "traefik.http.services.tribu.loadbalancer.server.port=80"
+
+      # --- Apex : HTTP → HTTPS (301) --------------------------------------
+      - "traefik.http.routers.tribu-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.tribu-http.entrypoints=web"
+      - "traefik.http.routers.tribu-http.middlewares=tribu-redirect-to-https"
+
+      # Middleware partagé : redirect HTTP → HTTPS (permanent)
+      - "traefik.http.middlewares.tribu-redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.tribu-redirect-to-https.redirectscheme.permanent=true"
+
+      # Middleware : 301 www.<domaine> → apex (HTTP comme HTTPS, un seul saut).
+      # Émet aussi le cert Let's Encrypt couvrant le SAN www via les routeurs ci-dessous.
+      - "traefik.http.middlewares.tribu-www-to-apex.redirectregex.regex=^https?://www\\.${DOMAIN}/(.*)"
+      - "traefik.http.middlewares.tribu-www-to-apex.redirectregex.replacement=https://${DOMAIN}/$${1}"
+      - "traefik.http.middlewares.tribu-www-to-apex.redirectregex.permanent=true"
+
+      # --- www : router HTTPS (émission du cert SAN www + redirect apex) --
+      - "traefik.http.routers.tribu-www.rule=Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.tribu-www.entrypoints=websecure"
+      - "traefik.http.routers.tribu-www.tls=true"
+      - "traefik.http.routers.tribu-www.tls.certresolver=myresolver"
+      - "traefik.http.routers.tribu-www.middlewares=tribu-www-to-apex"
+      - "traefik.http.routers.tribu-www.service=tribu"
+
+      # --- www : router HTTP → redirige directement vers l'apex HTTPS -----
+      - "traefik.http.routers.tribu-www-http.rule=Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.tribu-www-http.entrypoints=web"
+      - "traefik.http.routers.tribu-www-http.middlewares=tribu-www-to-apex"
+      - "traefik.http.routers.tribu-www-http.service=tribu"
+
+networks:
+  # Réseau interne (db, web, nginx) — créé automatiquement par Compose.
+  default:
+  # Réseau partagé où tourne Traefik (déjà existant sur le VPS).
+  traefik:
+    external: true
+    name: n8n-traefik_default
 
 volumes:
   pgdata:
