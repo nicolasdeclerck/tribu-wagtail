@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlparse
+
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
@@ -56,8 +58,9 @@ class ProjetPage(Page):
         "description dans la bannière).",
     )
     youtube_link = models.URLField(
-        "Lien YouTube (embed)", blank=True,
-        help_text="URL d'intégration, ex: https://www.youtube.com/embed/XXXX",
+        "Lien YouTube", blank=True,
+        help_text="Colle n'importe quel lien YouTube (youtu.be, watch?v=, "
+        "shorts ou embed) : il est converti automatiquement pour l'intégration.",
     )
     press_folder = models.ForeignKey(
         "wagtaildocs.Document",
@@ -112,6 +115,30 @@ class ProjetPage(Page):
     @property
     def has_detail_page(self):
         return not self.is_in_progress
+
+    @property
+    def youtube_embed_url(self):
+        """Normalise n'importe quel lien YouTube (youtu.be, watch?v=, shorts,
+        embed) en URL d'intégration utilisable dans une iframe."""
+        url = (self.youtube_link or "").strip()
+        if not url:
+            return ""
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        video_id = ""
+        if "youtu.be" in host:
+            video_id = parsed.path.lstrip("/").split("/")[0]
+        elif "youtube.com" in host:
+            if parsed.path.startswith("/embed/"):
+                return url  # déjà un lien d'intégration
+            if parsed.path == "/watch":
+                video_id = parse_qs(parsed.query).get("v", [""])[0]
+            elif parsed.path.startswith("/shorts/"):
+                parts = parsed.path.split("/")
+                video_id = parts[2] if len(parts) > 2 else ""
+        if video_id:
+            return f"https://www.youtube.com/embed/{video_id}"
+        return url  # format non reconnu : on renvoie l'URL telle quelle
 
     class Meta:
         verbose_name = "Projet / Spectacle"
