@@ -1,0 +1,43 @@
+name: Deploy to VPS
+
+# Déploiement auto à chaque push sur main (+ déclenchement manuel possible).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un seul déploiement à la fois ; on ne coupe pas un déploiement en cours.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déploiement SSH sur le VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.VPS_PROJECT_PATH }}"
+
+            echo "==> Mise à jour du code (aligne le VPS sur origin/main)"
+            git fetch --all --prune
+            git reset --hard origin/main
+
+            echo "==> Rebuild + redémarrage des conteneurs"
+            # L'entrypoint rejoue migrate + collectstatic au boot du conteneur web.
+            docker compose -p tribu up -d --build --remove-orphans
+
+            echo "==> Nettoyage des images orphelines"
+            docker image prune -f
+
+            echo "==> Vérification santé"
+            sleep 8
+            docker compose -p tribu ps
+            curl -fsS -o /dev/null -m 15 https://latribudoya.fr/ && echo "Site OK ✅"
