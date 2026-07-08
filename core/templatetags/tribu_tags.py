@@ -16,6 +16,14 @@ def footer_projets():
 
 
 @register.simple_tag
+def contact_page():
+    """The (unique) published contact page, or None."""
+    from contact.models import FormPage
+
+    return FormPage.objects.live().first()
+
+
+@register.simple_tag
 def footer_stages():
     """Published stages for the footer."""
     from stages.models import StagePage
