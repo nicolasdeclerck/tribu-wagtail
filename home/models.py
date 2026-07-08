@@ -29,6 +29,7 @@ class HomePage(Page):
         "compagnie.CompagniePage",
         "reseaux.ReseauxPage",
         "contact.FormPage",
+        "pros.ProPage",
     ]
 
     content_panels = Page.content_panels + [

@@ -9,6 +9,7 @@ module.exports = {
     "./compagnie/templates/**/*.html",
     "./reseaux/templates/**/*.html",
     "./contact/templates/**/*.html",
+    "./pros/templates/**/*.html",
     "./search/templates/**/*.html",
     "./core/static/js/**/*.js",
   ],

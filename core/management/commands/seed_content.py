@@ -27,6 +27,7 @@ from stages.models import (
     StageAxeTravail,
 )
 from compagnie.models import CompagniePage, MembrePage
+from pros.models import ProAtout, ProPage
 from reseaux.models import ReseauxPage
 
 Image = get_image_model()
@@ -52,6 +53,7 @@ class Command(BaseCommand):
         self.seed_projets()
         self.seed_stages()
         self.seed_reseaux()
+        self.seed_pros()
         self.seed_contact()
         # Carousel après les stages/projets : il réutilise leurs pages/images.
         self.seed_carousel()
@@ -501,6 +503,96 @@ class Command(BaseCommand):
             },
         )
         self.publish(page)
+
+    def seed_pros(self):
+        """Crée la page professionnels avec un contenu SEO par défaut.
+        Contrairement aux autres pages, elle n'est PAS mise à jour si elle
+        existe déjà : son contenu est destiné à être ajusté dans l'admin."""
+        existing = self.home.get_children().filter(
+            slug="programmer-un-spectacle"
+        ).first()
+        if existing:
+            return
+
+        projet_avec_visuel = (
+            ProjetPage.objects.live()
+            .filter(is_in_progress=False, background_image__isnull=False)
+            .order_by("ordre")
+            .first()
+        )
+        page = self.upsert(
+            self.home,
+            ProPage,
+            "programmer-un-spectacle",
+            {
+                "title": "Programmer un spectacle",
+                "show_in_menus": True,
+                "seo_title": (
+                    "Programmer un spectacle - Compagnie de théâtre "
+                    "La tribu d'Oya | Lille, Hauts-de-France"
+                ),
+                "search_description": (
+                    "Programmateur·ice·s : découvrez les spectacles de théâtre "
+                    "engagés de La tribu d'Oya, compagnie professionnelle basée "
+                    "à Lille. Dossiers artistiques, informations pratiques et "
+                    "contact pour votre programmation."
+                ),
+                "accroche": (
+                    "Compagnie de théâtre professionnelle · "
+                    "spectacles en tournée"
+                ),
+                "background_image": (
+                    projet_avec_visuel.background_image
+                    if projet_avec_visuel else None
+                ),
+                "intro": (
+                    "<p>Vous êtes programmateur·ice, responsable de saison "
+                    "culturelle, d'un festival, d'un établissement scolaire ou "
+                    "d'un tiers-lieu ? <b>La tribu d'Oya</b>, compagnie de "
+                    "théâtre professionnelle basée à Lille (Hauts-de-France), "
+                    "propose des spectacles engagés, disponibles à la "
+                    "programmation partout en France.</p>"
+                ),
+                "infos_pratiques": (
+                    "<p>Chaque spectacle dispose d'un dossier artistique "
+                    "détaillé (distribution, fiche technique, conditions "
+                    "financières). Nos formats s'adaptent aux salles de "
+                    "spectacle comme aux lieux non dédiés, et peuvent être "
+                    "accompagnés d'un bord plateau ou d'ateliers de pratique "
+                    "théâtrale.</p>"
+                ),
+                "cta_texte": (
+                    "<p>Écrivez-nous pour recevoir un dossier artistique "
+                    "complet, échanger sur les conditions techniques et "
+                    "financières, ou organiser une rencontre avec l'équipe.</p>"
+                ),
+            },
+        )
+        for ordre, (titre, texte) in enumerate([
+            (
+                "Un théâtre engagé et actuel",
+                "Des créations originales qui questionnent la société — "
+                "droits des femmes, traite des êtres humains… — et suscitent "
+                "le débat auprès de tous les publics.",
+            ),
+            (
+                "Des formats adaptables",
+                "Salles de spectacle, établissements scolaires, tiers-lieux : "
+                "nos pièces s'adaptent à votre lieu et à votre public, avec "
+                "possibilité de bord plateau après la représentation.",
+            ),
+            (
+                "Un accompagnement professionnel",
+                "Dossier artistique et technique complet, supports de "
+                "communication fournis et interlocutrice unique pour préparer "
+                "votre programmation sereinement.",
+            ),
+        ]):
+            ProAtout.objects.create(
+                page=page, sort_order=ordre, titre=titre, texte=texte
+            )
+        self.publish(page)
+        self.stdout.write("  + page professionnels")
 
     def seed_contact(self):
         """Crée la page de contact (form builder natif) avec des champs par
