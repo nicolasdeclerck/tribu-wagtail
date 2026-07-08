@@ -56,6 +56,30 @@ WAGTAILADMIN_BASE_URL = os.environ.get(
     "WAGTAILADMIN_BASE_URL", "https://latribudoya.fr"
 )
 
+# LOGGING ----------------------------------------------------------------
+
+# Sans config explicite, Django n'attache aucun handler aux loggers
+# applicatifs quand DEBUG=False : les warnings partent dans le vide.
+# Tout est envoyé sur la console (stdout/stderr), que gunicorn propage
+# à `docker logs` / `docker compose logs web`.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name} : {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {"handlers": ["console"], "level": "WARNING"},
+}
+
 # EMAIL ------------------------------------------------------------------
 
 EMAIL_BACKEND = os.environ.get(
