@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "compagnie",
     "reseaux",
     "contact",
+    "pros",
     "core",
     "search",
     "wagtail.contrib.forms",

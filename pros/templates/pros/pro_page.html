@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags tribu_tags %}
+
+{% block og_image %}{% if page.background_image %}{% image page.background_image width-1200 as og %}<meta property="og:image" content="https://latribudoya.fr{{ og.url }}" />{% endif %}{% endblock %}
+
+{% block content %}
+{# ---- Bannière : même langage que la page projet ---- #}
+{% if page.background_image %}{% image page.background_image fill-1920x1080 as bg %}{% endif %}
+<section class="relative min-h-[60vh] flex items-end bg-cover bg-center"
+         {% if bg %}style="background-image: url('{{ bg.url }}');"{% endif %}>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10"></div>
+    <div class="relative w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 space-y-4">
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold leading-none drop-shadow-lg">{{ page.title }}</h1>
+        {% if page.accroche %}
+        <p class="uppercase tracking-widest text-sm sm:text-base text-white/80">{{ page.accroche }}</p>
+        {% endif %}
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+            <a href="#spectacles" class="btn-glass px-5 py-2.5 w-fit inline-block">Découvrir nos spectacles</a>
+            {% contact_page as contact %}
+            {% if contact %}
+            <a href="{% pageurl contact %}"
+               class="px-5 py-2.5 w-fit inline-block rounded-full font-semibold border border-white/40 bg-black/20 backdrop-blur-md hover:bg-white/10 transition-colors">
+                Nous contacter
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 lg:py-16 space-y-16 lg:space-y-20">
+
+    {# ---- Introduction (pitch programmateur·ice·s) ---- #}
+    {% if page.intro %}
+    <section class="prose prose-invert max-w-3xl text-lg">{{ page.intro|richtext }}</section>
+    {% endif %}
+
+    {# ---- Atouts ---- #}
+    {% with atouts=page.atouts.all %}
+    {% if atouts %}
+    <section>
+        <h2 class="text-3xl font-bold">{{ page.atouts_titre }}</h2>
+        <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-8"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for atout in atouts %}
+            <div class="bg-white/5 border border-white/10 rounded-lg p-6 space-y-2">
+                <h3 class="text-xl font-semibold text-secondary">{{ atout.titre }}</h3>
+                {% if atout.texte %}<p class="text-white/80">{{ atout.texte }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% endwith %}
+
+    {# ---- Spectacles disponibles (générés depuis l'arbre de pages) ---- #}
+    {% if spectacles %}
+    <section id="spectacles">
+        <h2 class="text-3xl font-bold">{{ page.spectacles_titre }}</h2>
+        <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-8"></div>
+        <div class="space-y-10">
+            {% for spectacle in spectacles %}
+            <article class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10 items-center">
+                <div>
+                    {% if spectacle.background_image %}
+                    {% image spectacle.background_image fill-800x450 as bg %}
+                    <a href="{% pageurl spectacle %}" class="group block overflow-hidden rounded-md bg-black">
+                        <img src="{{ bg.url }}" alt="{{ spectacle.title }} — spectacle de La tribu d'Oya"
+                             class="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105">
+                    </a>
+                    {% else %}
+                    <div class="w-full aspect-video rounded-md bg-white/5"></div>
+                    {% endif %}
+                </div>
+                <div class="lg:col-span-2 space-y-3">
+                    <h3 class="text-2xl lg:text-3xl font-bold">
+                        <a href="{% pageurl spectacle %}" class="hover:text-secondary transition-colors">{{ spectacle.title }}</a>
+                    </h3>
+                    <p class="uppercase tracking-widest text-sm text-white/70">{{ spectacle.subtitle }}{% if spectacle.annee %} · {{ spectacle.annee }}{% endif %}</p>
+                    {% if spectacle.description %}
+                    <div class="text-white/80 line-clamp-3">{{ spectacle.description|richtext }}</div>
+                    {% endif %}
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1">
+                        <a href="{% pageurl spectacle %}" class="text-sm font-semibold text-secondary hover:text-white transition-colors">Voir le spectacle</a>
+                        {% if spectacle.dossier_artistique_url %}
+                        <a href="{{ spectacle.dossier_artistique_url }}" target="_blank" rel="noopener noreferrer"
+                           class="text-sm font-semibold text-secondary hover:text-white transition-colors">Télécharger le dossier artistique</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# ---- Informations pratiques ---- #}
+    {% if page.infos_pratiques %}
+    <section>
+        <h2 class="text-3xl font-bold">Informations pratiques</h2>
+        <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-6"></div>
+        <div class="prose prose-invert max-w-3xl">{{ page.infos_pratiques|richtext }}</div>
+    </section>
+    {% endif %}
+
+    {# ---- Appel à contact ---- #}
+    <section class="bg-white/5 border border-white/10 rounded-lg p-8 lg:p-12 text-center space-y-4">
+        <h2 class="text-2xl lg:text-3xl font-bold">{{ page.cta_titre }}</h2>
+        {% if page.cta_texte %}
+        <div class="text-white/80 max-w-2xl mx-auto">{{ page.cta_texte|richtext }}</div>
+        {% endif %}
+        {% contact_page as contact %}
+        {% if contact %}
+        <a href="{% pageurl contact %}" class="btn-glass px-6 py-3 w-fit inline-block">Demandez-nous des renseignements</a>
+        {% endif %}
+    </section>
+</div>
+
+{# ---- Données structurées schema.org (résultats enrichis) ---- #}
+<script type="application/ld+json">{{ structured_data|safe }}</script>
+{% endblock %}

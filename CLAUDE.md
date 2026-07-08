@@ -46,7 +46,11 @@ HomePage (/)                       home
 │   └── ProjetPage                 + ProjetGalleryImage (Orderable inline)
 ├── StageIndexPage (/stages/)      stages     → StagePage enfants
 │   └── StagePage                  + StageObjectif / StageAxeTravail / StageDate (Orderables inline)
-└── ReseauxPage (/reseaux/)        reseaux
+├── ReseauxPage (/reseaux/)        reseaux
+└── ProPage (/programmer-un-spectacle/)  pros   + ProAtout (Orderable inline)
+                                   Page SEO pour les programmateur·ice·s ; liste les
+                                   ProjetPage publiées (hors « en cours ») + JSON-LD schema.org.
+                                   Seed création seule : jamais mise à jour par seed_content.
 ```
 
 L'app `core` ne contient pas de modèle de page : elle regroupe les templates partagés (`base.html`, includes header/footer), les statiques (`core/static/`), les template tags, et la commande `seed_content`.
