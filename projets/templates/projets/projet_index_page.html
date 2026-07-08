@@ -2,23 +2,57 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 
 {% block content %}
-<section class="flex-grow flex flex-col gap-16 justify-center items-center w-full max-w-[1300px] mx-auto lg:px-16 p-8">
-    <h1 class="center lg:text-5xl text-3xl">{{ page.title }}</h1>
-    <div class="lg:grid lg:grid-cols-3 lg:gap-16 w-full lg:space-y-0 space-y-4">
+<section class="w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 lg:py-16">
+    <h1 class="text-4xl lg:text-5xl font-bold">{{ page.title }}</h1>
+    <div class="w-12 h-1 bg-secondary rounded-full mt-3 {% if page.intro %}mb-6{% else %}mb-12 lg:mb-16{% endif %}"></div>
+    {% if page.intro %}
+    <div class="prose prose-invert max-w-3xl text-white/80 mb-12 lg:mb-16">{{ page.intro|richtext }}</div>
+    {% endif %}
+
+    {# Une rangée par projet, image et texte alternés gauche/droite sur desktop #}
+    <div class="space-y-16 lg:space-y-24">
         {% for projet in projets %}
-            {% image projet.background_image fill-500x232 as bg %}
-            <div class="bg-white bg-cover bg-center rounded-md h-[232px]" style="background-image: url('{{ bg.url }}');">
-                <div class="lg:p-8 p-4 bg-white bg-opacity-70 text-black space-y-2 rounded-md text-right h-full flex flex-col justify-end items-end">
-                    <h2 class="text-3xl font-semibold">{{ projet.title }}</h2>
-                    <h3>{{ projet.subtitle }}</h3>
-                    <p>Année de création : {{ projet.annee }}</p>
+        <article class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+
+            {# Image (16/9, zoom léger au survol quand la page de détail existe) #}
+            <div {% if forloop.counter|divisibleby:2 %}class="lg:order-2"{% endif %}>
+                {% if projet.background_image %}
+                    {% image projet.background_image fill-1200x675 as bg %}
                     {% if projet.has_detail_page %}
-                        <a href="{% pageurl projet %}" class="btn-glass px-4 py-2 w-fit">En savoir plus</a>
+                    <a href="{% pageurl projet %}" class="group block overflow-hidden rounded-md bg-black">
+                        <img src="{{ bg.url }}" alt="{{ projet.title }}"
+                             class="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105">
+                    </a>
                     {% else %}
-                        <button class="bg-slate-400 text-white p-2 rounded-md w-fit">En cours de création</button>
+                    <div class="overflow-hidden rounded-md bg-black">
+                        <img src="{{ bg.url }}" alt="{{ projet.title }}" class="w-full aspect-video object-cover">
+                    </div>
                     {% endif %}
-                </div>
+                {% else %}
+                    <div class="w-full aspect-video rounded-md bg-white/5"></div>
+                {% endif %}
             </div>
+
+            {# Texte : titre, sous-titre en capitales · année, description, action #}
+            <div class="space-y-4 {% if forloop.counter|divisibleby:2 %}lg:order-1{% endif %}">
+                <h2 class="text-3xl lg:text-4xl font-bold">
+                    {% if projet.has_detail_page %}
+                    <a href="{% pageurl projet %}" class="hover:text-secondary transition-colors">{{ projet.title }}</a>
+                    {% else %}
+                    {{ projet.title }}
+                    {% endif %}
+                </h2>
+                <p class="uppercase tracking-widest text-sm text-white/70">{{ projet.subtitle }}{% if projet.annee %} · {{ projet.annee }}{% endif %}</p>
+                {% if projet.description %}
+                <div class="text-white/80 line-clamp-4">{{ projet.description|richtext }}</div>
+                {% endif %}
+                {% if projet.has_detail_page %}
+                <a href="{% pageurl projet %}" class="btn-glass px-5 py-2.5 w-fit inline-block">En savoir plus</a>
+                {% else %}
+                <span class="inline-block border border-secondary/60 text-secondary rounded-full px-4 py-1.5 text-sm font-semibold">En cours de création</span>
+                {% endif %}
+            </div>
+        </article>
         {% endfor %}
     </div>
 </section>
