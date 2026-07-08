@@ -85,6 +85,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.analytics",
+                "core.context_processors.turnstile",
             ],
         },
     },
@@ -100,6 +101,12 @@ TEMPLATES = [
 # Laisser les deux vides désactive complètement la mesure (dev, tests, CI).
 PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN", "")
 PLAUSIBLE_SCRIPT_URL = os.environ.get("PLAUSIBLE_SCRIPT_URL", "")
+
+# ─── Cloudflare Turnstile (anti-bots du formulaire de contact) ─────────────
+# Si la clé secrète n'est pas renseignée (dev, tests, CI), la vérification
+# est désactivée afin de ne pas bloquer les environnements sans clés.
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "")
 
 WSGI_APPLICATION = "tribu.wsgi.application"
 

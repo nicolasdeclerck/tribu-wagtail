@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% load wagtailcore_tags %}
 
+{% block extra_head %}
+    {% if TURNSTILE_SITE_KEY %}
+    {# Cloudflare Turnstile (anti-bots) — rendu implicite des .cf-turnstile #}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto px-5 py-16 flex flex-col gap-8">
     <header class="flex flex-col gap-4">
@@ -44,6 +51,13 @@
                 {% endif %}
             </div>
         {% endfor %}
+
+        {% if TURNSTILE_SITE_KEY %}
+        <div class="cf-turnstile"
+             data-sitekey="{{ TURNSTILE_SITE_KEY }}"
+             data-theme="dark"
+             data-language="fr"></div>
+        {% endif %}
 
         <div>
             <button type="submit" class="btn-glass px-6 py-2.5">
