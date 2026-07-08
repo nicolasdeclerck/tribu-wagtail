@@ -28,6 +28,9 @@ def verify_turnstile(token, remoteip=None, timeout=5):
     if not secret:
         return True
     if not token:
+        # Widget non résolu côté client (bot, JS bloqué, ou erreur de widget —
+        # ex. domaine non déclaré dans le dashboard Cloudflare).
+        logger.warning("Soumission sans jeton Turnstile — rejet sans appel réseau.")
         return False
 
     payload = {"secret": secret, "response": token}
