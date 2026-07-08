@@ -7,6 +7,7 @@ exportable dans l'admin) et envoyée par email aux adresses configurées.
 """
 
 from django.db import models
+from django.template.response import TemplateResponse
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -17,6 +18,8 @@ from wagtail.admin.panels import (
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField
+
+from core.turnstile import verify_turnstile
 
 
 class FormField(AbstractFormField):
@@ -59,6 +62,30 @@ class FormPage(AbstractEmailForm):
             heading="Envoi des réponses par email",
         ),
     ]
+
+    def serve(self, request, *args, **kwargs):
+        """Vérifie le jeton Cloudflare Turnstile avant de traiter la soumission.
+
+        En cas d'échec (bot présumé, jeton absent ou invalide), le formulaire
+        est ré-affiché avec une erreur globale et la soumission n'est ni
+        enregistrée ni envoyée par email. Si `TURNSTILE_SECRET_KEY` n'est pas
+        configurée, la vérification est désactivée (cf. core/turnstile.py).
+        """
+        if request.method == "POST":
+            token = request.POST.get("cf-turnstile-response", "")
+            if not verify_turnstile(token, request.META.get("REMOTE_ADDR")):
+                form = self.get_form(
+                    request.POST, request.FILES, page=self, user=request.user
+                )
+                form.is_valid()  # déclenche full_clean, prérequis d'add_error
+                form.add_error(
+                    None,
+                    "La vérification anti-robots a échoué. Merci de réessayer.",
+                )
+                context = self.get_context(request)
+                context["form"] = form
+                return TemplateResponse(request, self.get_template(request), context)
+        return super().serve(request, *args, **kwargs)
 
     class Meta:
         verbose_name = "Page de contact (formulaire)"
