@@ -7,11 +7,14 @@ d'environnement `TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY`.
 """
 
 import json
+import logging
 from urllib import error, parse, request
 
 from django.conf import settings
 
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+logger = logging.getLogger(__name__)
 
 
 def verify_turnstile(token, remoteip=None, timeout=5):
@@ -35,7 +38,13 @@ def verify_turnstile(token, remoteip=None, timeout=5):
     try:
         with request.urlopen(SITEVERIFY_URL, data=data, timeout=timeout) as resp:
             result = json.loads(resp.read().decode())
-    except (error.URLError, ValueError, TimeoutError):
+    except (error.URLError, ValueError, TimeoutError) as exc:
+        logger.warning("Turnstile siteverify injoignable : %s", exc)
         return False
 
+    if not result.get("success"):
+        logger.warning(
+            "Échec de vérification Turnstile : error-codes=%s",
+            result.get("error-codes"),
+        )
     return bool(result.get("success"))
