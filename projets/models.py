@@ -77,8 +77,9 @@ class ProjetPage(Page):
         "(badge « En cours de création »).",
     )
     infos_complementaires = RichTextField(
-        "Informations complémentaires", blank=True,
-        help_text="Bloc de texte riche affiché en bas de la page.",
+        "Présentation du spectacle", blank=True,
+        help_text="Texte de présentation affiché sous le teaser, dans la "
+        "colonne principale de la page.",
     )
 
     parent_page_types = ["projets.ProjetIndexPage"]
@@ -183,6 +184,10 @@ class ProjetActeur(Orderable):
         ProjetPage, on_delete=models.CASCADE, related_name="acteurs"
     )
     nom = models.CharField(max_length=255)
+    role = models.CharField(
+        "Rôle joué", max_length=255, blank=True,
+        help_text="Affiché sous le nom dans la distribution.",
+    )
     photo = models.ForeignKey(
         "wagtailimages.Image",
         null=True,
@@ -199,4 +204,5 @@ class ProjetActeur(Orderable):
         FieldPanel("photo"),
         FieldPanel("copyright"),
         FieldPanel("nom"),
+        FieldPanel("role"),
     ]

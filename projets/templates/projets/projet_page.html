@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailcore_tags wagtailimages_tags tribu_tags %}
 
 {% block og_type %}article{% endblock %}
 {% block og_image %}{% if page.background_image %}{% image page.background_image width-1200 as og %}<meta property="og:image" content="https://latribudoya.fr{{ og.url }}" />{% endif %}{% endblock %}
@@ -9,7 +9,7 @@
 <style>
     .projet-gallery { --swiper-theme-color: #f3d159; }
     .projet-gallery-thumbs .swiper-slide {
-        height: 5rem;
+        height: 4.5rem;
         opacity: .45;
         cursor: pointer;
         transition: opacity .2s ease;
@@ -35,134 +35,183 @@
          {% if bg %}style="background-image: url('{{ bg.url }}');"{% endif %}>
     {# voile sombre : lisibilité du texte par-dessus le visuel #}
     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10"></div>
-    <div class="relative w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12 space-y-6">
+    <div class="relative w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 space-y-6">
         <h1 class="text-5xl sm:text-7xl lg:text-8xl font-bold leading-none drop-shadow-lg">{{ page.title }}</h1>
         {% if page.description %}
         <div class="text-lg lg:text-xl max-w-3xl text-white/90 space-y-4">{{ page.description|richtext }}</div>
         {% endif %}
         {% if page.dossier_artistique_url %}
-        <a href="{{ page.dossier_artistique_url }}" target="_blank" rel="noopener noreferrer"
-           class="btn-glass px-5 py-2.5 w-fit inline-flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-            </svg>
-            Dossier artistique
-        </a>
+        <div class="space-y-3 pt-2">
+            <p class="text-lg font-semibold drop-shadow">Vous souhaitez programmer le spectacle&nbsp;?</p>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ page.dossier_artistique_url }}" target="_blank" rel="noopener noreferrer"
+                   class="btn-glass px-5 py-2.5 w-fit inline-flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Télécharger le dossier artistique
+                </a>
+                {% contact_page as contact %}
+                {% if contact %}
+                <a href="{% pageurl contact %}"
+                   class="px-5 py-2.5 w-fit inline-flex items-center gap-2 rounded-full font-semibold border border-white/40 bg-black/20 backdrop-blur-md hover:bg-white/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    </svg>
+                    Demandez-nous des renseignements
+                </a>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
     </div>
 </section>
 
-{# ---- Prochaines représentations (masquée s'il n'y en a pas) ---- #}
-{% with representations=page.representations.all %}
-{% if representations %}
-<section class="w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12">
-    <h2 class="text-3xl lg:text-4xl font-bold mb-8">Prochaines représentations</h2>
-    <ul class="space-y-4">
-        {% for rep in representations %}
-        <li class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 bg-white/5 border border-white/10 rounded-lg p-5">
-            <div class="sm:flex-grow space-y-1">
-                <h3 class="text-xl font-semibold">{{ rep.date }}{% if rep.horaire %} <span class="text-white/80 font-normal">— {{ rep.horaire }}</span>{% endif %}</h3>
-                {% if rep.lieu %}<p class="text-white/70">{{ rep.lieu }}</p>{% endif %}
+{# ---- Corps de page : colonne principale (3/5) + colonne latérale (2/5) ---- #}
+{% with representations=page.representations.all acteurs=page.acteurs.all gallery=page.gallery_images.all %}
+<div class="w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
+
+    {# ---- Colonne principale : teaser, présentation, galerie ---- #}
+    <main class="lg:col-span-3 space-y-14 min-w-0">
+
+        {# Teaser vidéo #}
+        {% if page.youtube_link %}
+        <section>
+            <h2 class="text-3xl font-bold">Teaser</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-6"></div>
+            <div class="aspect-video">
+                <iframe class="w-full h-full bg-black rounded-md"
+                        src="{{ page.youtube_embed_url }}"
+                        title="Teaser {{ page.title }}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
             </div>
-            {% if rep.billetterie %}
-            <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"
-               class="btn-glass px-5 py-2.5 w-fit sm:shrink-0 inline-flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
-                </svg>
-                Réserver vos billets
-            </a>
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-</section>
-{% endif %}
-{% endwith %}
+        </section>
+        {% endif %}
 
-{# ---- Galerie d'images (carousel Swiper) ---- #}
-{% with gallery=page.gallery_images.all %}
-{% if gallery %}
-<section class="w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12">
-    <h2 class="text-3xl lg:text-4xl font-bold mb-8">Galerie</h2>
+        {# Présentation du spectacle (texte riche) #}
+        {% if page.infos_complementaires %}
+        <section>
+            <h2 class="text-3xl font-bold">Présentation du spectacle</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-6"></div>
+            <div class="prose prose-invert max-w-none">{{ page.infos_complementaires|richtext }}</div>
+        </section>
+        {% endif %}
 
-    {# Slider principal #}
-    <div class="swiper projet-gallery w-full h-[400px] lg:h-[560px] bg-black rounded-md">
-        <div class="swiper-wrapper">
-            {% for item in gallery %}
-                {% image item.image fill-1200x800 as img %}
-                <div class="swiper-slide">
-                    <img class="block w-full h-full object-cover" src="{{ img.url }}" alt="{{ page.title }}">
+        {# Galerie d'images (carousel Swiper) #}
+        {% if gallery %}
+        <section>
+            <h2 class="text-3xl font-bold">Galerie</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-6"></div>
+
+            {# Slider principal #}
+            <div class="swiper projet-gallery w-full h-[300px] sm:h-[380px] lg:h-[440px] bg-black rounded-md">
+                <div class="swiper-wrapper">
+                    {% for item in gallery %}
+                        {% image item.image fill-1200x800 as img %}
+                        <div class="swiper-slide">
+                            <img class="block w-full h-full object-cover" src="{{ img.url }}" alt="{{ page.title }}">
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    </div>
+            </div>
 
-    {# Bande de miniatures cliquables #}
-    <div class="swiper projet-gallery-thumbs w-full mt-3">
-        <div class="swiper-wrapper">
-            {% for item in gallery %}
-                {% image item.image fill-240x160 as thumb %}
-                <div class="swiper-slide">
-                    <img src="{{ thumb.url }}" alt="{{ page.title }} — miniature {{ forloop.counter }}">
+            {# Bande de miniatures cliquables #}
+            <div class="swiper projet-gallery-thumbs w-full mt-3">
+                <div class="swiper-wrapper">
+                    {% for item in gallery %}
+                        {% image item.image fill-240x160 as thumb %}
+                        <div class="swiper-slide">
+                            <img src="{{ thumb.url }}" alt="{{ page.title }} — miniature {{ forloop.counter }}">
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-{% endwith %}
+            </div>
+        </section>
+        {% endif %}
 
-{# ---- Distribution (acteur·rice·s) ---- #}
-{% with acteurs=page.acteurs.all %}
-{% if acteurs %}
-<section class="w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12">
-    <h2 class="text-3xl lg:text-4xl font-bold mb-8">Distribution</h2>
-    <div class="flex flex-wrap gap-6 lg:gap-8 justify-center">
-        {% for acteur in acteurs %}
-        <figure class="w-[140px] sm:w-[200px]">
-            {% if acteur.photo %}
-            {% image acteur.photo fill-566x566 as ph %}
-            <div class="relative aspect-square overflow-hidden rounded-md bg-black">
-                <img class="w-full h-full object-cover" src="{{ ph.url }}" alt="{{ acteur.nom }}">
-                {% if acteur.copyright %}
-                <span class="absolute bottom-0 right-0 bg-black/75 text-white text-[11px] leading-tight px-2 py-1 rounded-tl-md">{{ acteur.copyright }}</span>
+        {# Crédits (texte riche restreint) #}
+        {% if page.credit %}
+        <section>
+            <h2 class="text-3xl font-bold">Crédits</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-6"></div>
+            <div class="prose prose-invert max-w-none text-white/80">{{ page.credit|richtext }}</div>
+        </section>
+        {% endif %}
+    </main>
+
+    {# ---- Colonne latérale : représentations + distribution (sticky sur desktop) ---- #}
+    <aside class="lg:col-span-2 lg:sticky lg:top-28 space-y-12 min-w-0">
+
+        {# Prochaines représentations (version condensée) #}
+        <section>
+            <h2 class="text-2xl font-bold">Prochaines représentations</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-5"></div>
+            {% if representations %}
+            <ul class="divide-y divide-white/10">
+                {% for rep in representations %}
+                <li class="py-4 first:pt-0 space-y-0.5">
+                    <p class="font-semibold">{{ rep.date }}{% if rep.horaire %} <span class="text-white/70 font-normal">· {{ rep.horaire }}</span>{% endif %}</p>
+                    {% if rep.lieu %}<p class="text-sm text-white/70">{{ rep.lieu }}</p>{% endif %}
+                    {% if rep.billetterie %}
+                    <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 pt-1 text-sm font-semibold text-secondary hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+                        </svg>
+                        Réserver vos billets
+                    </a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="space-y-4">
+                <p class="text-white/70">Pas de représentation prévue.</p>
+                {% contact_page as contact %}
+                {% if contact %}
+                <a href="{% pageurl contact %}"
+                   class="btn-glass px-5 py-2.5 w-fit inline-flex items-center gap-2 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    </svg>
+                    Programmez le spectacle
+                </a>
                 {% endif %}
             </div>
-            {% else %}
-            <div class="aspect-square rounded-md bg-white/10"></div>
             {% endif %}
-            <figcaption class="mt-3 text-center font-semibold">{{ acteur.nom }}</figcaption>
-        </figure>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+        </section>
+
+        {# Distribution (liste condensée : miniature + nom + rôle) #}
+        {% if acteurs %}
+        <section>
+            <h2 class="text-2xl font-bold">Distribution</h2>
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-5"></div>
+            <ul class="space-y-4">
+                {% for acteur in acteurs %}
+                <li class="flex items-center gap-4">
+                    {% if acteur.photo %}
+                    {% image acteur.photo fill-128x128 as ph %}
+                    <img class="w-14 h-14 shrink-0 rounded-full object-cover"
+                         src="{{ ph.url }}" alt="{{ acteur.nom }}"
+                         {% if acteur.copyright %}title="{{ acteur.copyright }}"{% endif %}>
+                    {% else %}
+                    <div class="w-14 h-14 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-white/40 font-semibold" aria-hidden="true">{{ acteur.nom|first|upper }}</div>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <p class="font-semibold leading-tight">{{ acteur.nom }}</p>
+                        {% if acteur.role %}<p class="text-sm text-white/60">{{ acteur.role }}</p>{% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+    </aside>
+</div>
 {% endwith %}
-
-{# ---- Teaser vidéo ---- #}
-{% if page.youtube_link %}
-<section class="w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12">
-    <h2 class="text-3xl lg:text-4xl font-bold mb-8">Teaser</h2>
-    <div class="aspect-video">
-        <iframe class="w-full h-full border-4 border-white bg-black rounded-md"
-                src="{{ page.youtube_embed_url }}"
-                title="Teaser {{ page.title }}"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen></iframe>
-    </div>
-</section>
-{% endif %}
-
-{# ---- Informations complémentaires (texte riche) ---- #}
-{% if page.infos_complementaires %}
-<section class="w-full max-w-[1000px] mx-auto px-4 sm:px-8 lg:px-16 py-12">
-    <h2 class="text-3xl lg:text-4xl font-bold mb-8">Informations complémentaires</h2>
-    <div class="prose prose-invert max-w-none">{{ page.infos_complementaires|richtext }}</div>
-</section>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}{% if page.gallery_images.all %}
