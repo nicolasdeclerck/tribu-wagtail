@@ -42,6 +42,11 @@
         <script defer src="{% static 'js/aos.js' %}"></script>
         <script defer src="{% static 'js/app.js' %}"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+        {# Plausible (mesure d'audience sans cookie) — visiteurs anonymes uniquement #}
+        {% if PLAUSIBLE_DOMAIN and PLAUSIBLE_SCRIPT_URL and not request.user.is_authenticated %}
+        <script defer data-domain="{{ PLAUSIBLE_DOMAIN }}" src="{{ PLAUSIBLE_SCRIPT_URL }}"></script>
+        {% endif %}
     </head>
 
     <body

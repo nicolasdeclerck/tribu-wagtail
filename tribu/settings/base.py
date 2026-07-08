@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from pathlib import Path
 
@@ -82,10 +84,22 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.analytics",
             ],
         },
     },
 ]
+
+# ─── Plausible Analytics (auto-hébergé, sans cookie) ───────────────────────
+# Mesure d'audience via l'instance Plausible Community Edition auto-hébergée
+# (la même que celle du site Culturall). Le script n'est injecté QUE pour les
+# visiteurs anonymes (cf. tribu/templates/base.html) : les éditeur·ice·s
+# connecté·e·s sont exclu·e·s des statistiques.
+#   - PLAUSIBLE_DOMAIN     : le « data-domain » du site suivi (ex. latribudoya.fr)
+#   - PLAUSIBLE_SCRIPT_URL : l'URL du script servi par l'instance Plausible
+# Laisser les deux vides désactive complètement la mesure (dev, tests, CI).
+PLAUSIBLE_DOMAIN = os.environ.get("PLAUSIBLE_DOMAIN", "")
+PLAUSIBLE_SCRIPT_URL = os.environ.get("PLAUSIBLE_SCRIPT_URL", "")
 
 WSGI_APPLICATION = "tribu.wsgi.application"
 
