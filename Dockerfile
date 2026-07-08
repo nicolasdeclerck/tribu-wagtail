@@ -34,6 +34,8 @@ COPY projets ./projets
 COPY stages ./stages
 COPY compagnie ./compagnie
 COPY reseaux ./reseaux
+COPY contact ./contact
+COPY pros ./pros
 COPY search ./search
 
 RUN tailwindcss -c tailwind.config.js \
