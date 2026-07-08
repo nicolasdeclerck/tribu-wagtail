@@ -17,14 +17,18 @@
         >
             {% for item in page.carousel_items.all %}
                 {% image item.background_image fill-1600x1000 as bg %}
-                <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative p-4" style="background-image: url('{{ bg.url }}');">
-                    <div class="my-16 md:absolute md:right-28 md:top-28 md:w-96 gap-4 bg-white/40 backdrop-blur-lg backdrop-saturate-150 border border-white/50 shadow-xl text-right p-5 rounded-2xl text-black flex flex-col items-end">
-                        <h2 class="text-5xl">{{ item.title }}</h2>
-                        {% if item.subtitle %}<p class="text-lg">{{ item.subtitle }}</p>{% endif %}
-                        {% if item.description %}<div class="text-sm">{{ item.description|richtext }}</div>{% endif %}
-                        {% if item.link_page and item.button_text %}
-                            <a href="{% pageurl item.link_page %}" class="btn-glass px-4 py-2 w-fit">{{ item.button_text }}</a>
-                        {% endif %}
+                <div class="h-full w-full flex-shrink-0 bg-cover bg-center relative" style="background-image: url('{{ bg.url }}');">
+                    {# voile sombre : lisibilité du texte par-dessus le visuel (même style que la bannière projet) #}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10"></div>
+                    <div class="absolute inset-x-0 bottom-0">
+                        <div class="w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 pb-14 md:pb-20 space-y-4 text-white">
+                            <h2 class="text-5xl sm:text-6xl lg:text-7xl font-bold leading-none drop-shadow-lg">{{ item.title }}</h2>
+                            {% if item.subtitle %}<p class="uppercase tracking-widest text-sm sm:text-base text-white/80">{{ item.subtitle }}</p>{% endif %}
+                            {% if item.description %}<div class="text-base lg:text-lg max-w-2xl text-white/90">{{ item.description|richtext }}</div>{% endif %}
+                            {% if item.link_page and item.button_text %}
+                                <a href="{% pageurl item.link_page %}" class="btn-glass px-5 py-2.5 w-fit inline-block">{{ item.button_text }}</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             {% endfor %}
