@@ -22,6 +22,14 @@ from wagtail.fields import RichTextField
 from core.turnstile import verify_turnstile
 
 
+def _client_ip(request):
+    """IP de l'appelant en tenant compte d'un éventuel proxy (X-Forwarded-For)."""
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
+
 class FormField(AbstractFormField):
     """Un champ du formulaire de contact (type, libellé, obligatoire…),
     ordonnable et édité en inline sur la `FormPage`."""
@@ -73,7 +81,7 @@ class FormPage(AbstractEmailForm):
         """
         if request.method == "POST":
             token = request.POST.get("cf-turnstile-response", "")
-            if not verify_turnstile(token, request.META.get("REMOTE_ADDR")):
+            if not verify_turnstile(token, _client_ip(request)):
                 form = self.get_form(
                     request.POST, request.FILES, page=self, user=request.user
                 )

@@ -72,3 +72,15 @@ class TurnstileContactFormTests(WagtailPageTestCase):
         self.assertContains(response, "Merci !")
         self.assertEqual(FormSubmission.objects.count(), 1)
         mock_verify.assert_called_once()
+
+    @mock.patch("contact.models.verify_turnstile", return_value=True)
+    def test_client_ip_read_from_x_forwarded_for(self, mock_verify):
+        # Derrière Traefik + nginx, REMOTE_ADDR est l'IP du proxy : c'est la
+        # première IP de X-Forwarded-For qui doit être transmise à Cloudflare.
+        self.client.post(
+            self.form_page.url,
+            {"message": "Bonjour", "cf-turnstile-response": "jeton"},
+            HTTP_X_FORWARDED_FOR="203.0.113.7, 172.18.0.3",
+        )
+
+        mock_verify.assert_called_once_with("jeton", "203.0.113.7")
