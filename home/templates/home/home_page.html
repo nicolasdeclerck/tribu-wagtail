@@ -76,7 +76,38 @@
     <div class="w-full max-w-[1300px] mx-auto px-4 sm:px-8 py-14 lg:py-16">
         <h2 class="text-3xl sm:text-4xl font-bold">Réservez vos places&nbsp;!</h2>
         <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-8"></div>
-        <div class="overflow-x-auto">
+        {# Mobile : liste de cartes empilées (le tableau ne tient pas sur petit écran) #}
+        <ul class="md:hidden divide-y divide-white/10">
+            {% for rep in representations %}
+            <li class="py-5 first:pt-0 flex gap-4">
+                {% if rep.page.background_image %}
+                {% image rep.page.background_image fill-240x160 as thumb %}
+                <img class="w-20 h-14 shrink-0 rounded-md object-cover" src="{{ thumb.url }}" alt="{{ rep.page.title }}">
+                {% endif %}
+                <div class="min-w-0 space-y-0.5">
+                    {% if rep.page.has_detail_page %}
+                    <a href="{% pageurl rep.page %}" class="font-semibold hover:text-secondary transition-colors">{{ rep.page.title }}</a>
+                    {% else %}
+                    <p class="font-semibold">{{ rep.page.title }}</p>
+                    {% endif %}
+                    <p class="text-sm">{{ rep.date }}{% if rep.horaire %} <span class="text-white/70">· {{ rep.horaire }}</span>{% endif %}</p>
+                    {% if rep.lieu %}<p class="text-sm text-white/70">{{ rep.lieu }}</p>{% endif %}
+                    {% if rep.billetterie %}
+                    <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 pt-1 text-sm font-semibold text-secondary hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+                        </svg>
+                        Réserver
+                    </a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        {# Desktop : tableau #}
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
                     <tr class="border-b border-white/20 text-sm uppercase tracking-widest text-white/60">
