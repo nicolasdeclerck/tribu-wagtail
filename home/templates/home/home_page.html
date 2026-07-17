@@ -5,7 +5,7 @@
 
 {% block content %}
 <section
-    class="flex flex-col overflow-hidden relative h-[calc(100vh-88px)]"
+    class="flex flex-col overflow-hidden relative h-[calc(80vh-88px)]"
     x-data="homeCarousel({{ page.carousel_items.count }})"
     @keydown.window.arrow-left="prev()"
     @keydown.window.arrow-right="next()"
@@ -57,10 +57,10 @@
         </div>
     </div>
 
-    {% if page.custom_section %}
+    {% if representations or page.custom_section %}
     {# Indicateur « défiler vers le bas » : visible seulement s'il y a du contenu dessous. #}
-    <a href="#custom-section"
-       @click.prevent="document.getElementById('custom-section').scrollIntoView({ behavior: 'smooth' })"
+    <a href="{% if representations %}#reservations{% else %}#custom-section{% endif %}"
+       @click.prevent="document.getElementById('{% if representations %}reservations{% else %}custom-section{% endif %}').scrollIntoView({ behavior: 'smooth' })"
        aria-label="Défiler vers le bas"
        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-white/90 hover:text-white transition-colors animate-bounce">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -69,6 +69,62 @@
     </a>
     {% endif %}
 </section>
+
+{% if representations %}
+{# ---- Représentations à venir, tous spectacles confondus ---- #}
+<section id="reservations" class="bg-black text-white">
+    <div class="w-full max-w-[1300px] mx-auto px-4 sm:px-8 py-14 lg:py-16">
+        <h2 class="text-3xl sm:text-4xl font-bold">Réservez vos places&nbsp;!</h2>
+        <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-8"></div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-white/20 text-sm uppercase tracking-widest text-white/60">
+                        <th scope="col" class="py-3 pr-6 font-semibold">Spectacle</th>
+                        <th scope="col" class="py-3 pr-6 font-semibold">Date</th>
+                        <th scope="col" class="py-3 pr-6 font-semibold">Horaire</th>
+                        <th scope="col" class="py-3 pr-6 font-semibold">Lieu</th>
+                        <th scope="col" class="py-3 font-semibold"><span class="sr-only">Billetterie</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/10">
+                    {% for rep in representations %}
+                    <tr>
+                        <td class="py-4 pr-6 font-semibold">
+                            <div class="flex items-center gap-4">
+                                {% if rep.page.background_image %}
+                                {% image rep.page.background_image fill-240x160 as thumb %}
+                                <img class="w-20 h-14 shrink-0 rounded-md object-cover" src="{{ thumb.url }}" alt="{{ rep.page.title }}">
+                                {% endif %}
+                                {% if rep.page.has_detail_page %}
+                                <a href="{% pageurl rep.page %}" class="hover:text-secondary transition-colors">{{ rep.page.title }}</a>
+                                {% else %}
+                                <span>{{ rep.page.title }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-4 pr-6 whitespace-nowrap">{{ rep.date }}</td>
+                        <td class="py-4 pr-6 text-white/70 whitespace-nowrap">{{ rep.horaire|default:"—" }}</td>
+                        <td class="py-4 pr-6 text-white/70">{{ rep.lieu|default:"—" }}</td>
+                        <td class="py-4">
+                            {% if rep.billetterie %}
+                            <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-white transition-colors whitespace-nowrap">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+                                </svg>
+                                Réserver
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {% if page.custom_section %}
 <section id="custom-section" class="bg-black text-white">

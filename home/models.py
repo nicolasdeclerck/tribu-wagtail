@@ -39,13 +39,20 @@ class HomePage(Page):
     ]
 
     def get_context(self, request, *args, **kwargs):
-        from projets.models import ProjetPage
+        from projets.models import ProjetPage, ProjetRepresentation
         from stages.models import StagePage
 
         context = super().get_context(request, *args, **kwargs)
         # Stages + projets restent exposés pour le bloc SEO (sr-only) uniquement.
         context["seo_stages"] = StagePage.objects.live().order_by("ordre")
         context["seo_projets"] = ProjetPage.objects.live().order_by("ordre")
+        # Toutes les représentations prévues (tous spectacles publiés confondus),
+        # pour le tableau « Réservez vos places ! » sous le carrousel.
+        context["representations"] = (
+            ProjetRepresentation.objects.filter(page__live=True)
+            .select_related("page")
+            .order_by("page__ordre", "sort_order")
+        )
         return context
 
     class Meta:
