@@ -32,6 +32,7 @@ class HomePage(Page):
         "reseaux.ReseauxPage",
         "contact.FormPage",
         "pros.ProPage",
+        "articles.ArticlePage",
     ]
 
     content_panels = Page.content_panels + [
@@ -42,6 +43,11 @@ class HomePage(Page):
 
     def get_context(self, request, *args, **kwargs):
         from projets.models import ProjetPage, ProjetRepresentation
+        from projets.structured_data import (
+            dumps_json_ld,
+            organization_dict,
+            theater_event_dict,
+        )
         from stages.models import StagePage
 
         context = super().get_context(request, *args, **kwargs)
@@ -57,6 +63,14 @@ class HomePage(Page):
             .filter(Q(date__gte=timezone.localdate()) | Q(date__isnull=True))
             .select_related("page")
             .order_by(F("date").asc(nulls_last=True), "page__ordre", "sort_order")
+        )
+        context["structured_data"] = dumps_json_ld(
+            [organization_dict(request, self.intro or self.search_description)]
+            + [
+                theater_event_dict(request, r)
+                for r in context["representations"]
+                if r.date
+            ]
         )
         return context
 

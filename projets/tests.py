@@ -1,6 +1,7 @@
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from importlib import import_module
 
+from django.apps import apps
 from django.utils import timezone
 from wagtail.images import get_image_model
 from wagtail.images.tests.utils import get_test_image_file
@@ -15,6 +16,7 @@ from projets.models import (
     ProjetPage,
     ProjetRepresentation,
 )
+from projets.structured_data import parse_horaire
 
 # Le nom des modules commence par un chiffre : import dynamique obligatoire.
 parse_date = import_module(
@@ -23,6 +25,9 @@ parse_date = import_module(
 convertir_contenu = import_module(
     "projets.migrations.0011_representation_date_revisions"
 )._convertir_contenu
+migration_meta = import_module(
+    "projets.migrations.0012_remplir_search_description"
+)
 
 
 class RepresentationTriTests(WagtailPageTestCase):
@@ -155,6 +160,196 @@ class ConversionRevisionsTests(WagtailPageTestCase):
     def test_contenu_sans_representations_ignore(self):
         self.assertFalse(convertir_contenu({"title": "Une page"}))
         self.assertFalse(convertir_contenu({"representations": None}))
+
+
+class TheaterEventJsonLdTests(WagtailPageTestCase):
+    """JSON-LD schema.org TheaterEvent sur les pages spectacle et l'accueil."""
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        self.home = HomePage(title="Home")
+        root_page.add_child(instance=self.home)
+        index = ProjetIndexPage(title="Projets")
+        self.home.add_child(instance=index)
+        self.projet = ProjetPage(title="Mon spectacle")
+        index.add_child(instance=self.projet)
+        self.aujourdhui = timezone.localdate()
+
+    def _rep(self, jours, **kwargs):
+        return ProjetRepresentation.objects.create(
+            page=self.projet,
+            date=None if jours is None else self.aujourdhui + timedelta(days=jours),
+            **kwargs,
+        )
+
+    def test_parse_horaire(self):
+        self.assertEqual(parse_horaire("20h"), time(20, 0))
+        self.assertEqual(parse_horaire("20h30"), time(20, 30))
+        self.assertEqual(parse_horaire("20:30"), time(20, 30))
+        self.assertEqual(parse_horaire("20 h 30"), time(20, 30))
+        self.assertIsNone(parse_horaire(""))
+        self.assertIsNone(parse_horaire("soirée"))
+        self.assertIsNone(parse_horaire("25h"))
+
+    def test_jsonld_theater_event_sur_page_spectacle(self):
+        self._rep(
+            10,
+            lieu="Bazaar Saint So - 292 rue Camille Guérin, 59000 Lille",
+            horaire="20h30",
+            billetterie="https://billets.example.com",
+        )
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, '"@type": "TheaterEvent"')
+        self.assertContains(
+            response,
+            "Mon spectacle — Bazaar Saint So - 292 rue Camille Guérin, 59000 Lille",
+        )
+        self.assertContains(response, "T20:30:00")
+        self.assertContains(response, '"eventStatus"')
+        self.assertContains(response, '"Bazaar Saint So"')
+        self.assertContains(response, "292 rue Camille Guérin")
+        self.assertContains(response, '"59000"')
+        self.assertContains(response, '"Lille"')
+        self.assertContains(response, "https://billets.example.com")
+        self.assertContains(response, '"@type": "BreadcrumbList"')
+
+    def test_jsonld_exclut_sans_date_et_passees(self):
+        self._rep(None)
+        self._rep(-10)
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, '"@type": "BreadcrumbList"')
+        self.assertNotContains(response, '"@type": "TheaterEvent"')
+
+    def test_jsonld_pas_de_theater_event_sans_representation(self):
+        response = self.client.get(self.projet.url)
+        self.assertNotContains(response, '"@type": "TheaterEvent"')
+
+    def test_jsonld_accueil(self):
+        self._rep(
+            10,
+            lieu="Jardin de la maison des jeunes, 31 rue Jules Guesde, 59000 Lille",
+            horaire="17h",
+        )
+        response = self.client.get(self.home.url)
+        self.assertContains(response, '"@type": "PerformingGroup"')
+        self.assertContains(response, '"La tribu d\'Oya"')
+        self.assertContains(response, '"@type": "TheaterEvent"')
+        self.assertContains(response, "T17:00:00")
+        self.assertContains(response, "31 rue Jules Guesde")
+
+        # Une représentation passée ne doit pas apparaître dans le JSON-LD.
+        self._rep(-10)
+        response = self.client.get(self.home.url)
+        self.assertNotContains(
+            response, (self.aujourdhui - timedelta(days=10)).isoformat()
+        )
+
+
+class MetaDescriptionTests(WagtailPageTestCase):
+    """Meta description garantie sur les pages spectacle.
+
+    base.html ne rend la balise que si `search_description` est renseigné :
+    ProjetPage.save() génère donc un fallback depuis le contenu de la page
+    quand le champ (onglet « Promotion ») est laissé vide, et la migration
+    0012 rattrape les pages existantes (ex. /projets/jeanne-chauvin/).
+    """
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        homepage = HomePage(title="Home")
+        root_page.add_child(instance=homepage)
+        self.index = ProjetIndexPage(title="Projets")
+        homepage.add_child(instance=self.index)
+
+    def _projet(self, **kwargs):
+        projet = ProjetPage(title="Mon spectacle", **kwargs)
+        self.index.add_child(instance=projet)
+        return projet
+
+    def test_save_genere_un_fallback_depuis_infos_complementaires(self):
+        projet = self._projet(
+            infos_complementaires="<p>Un spectacle engagé sur les femmes.</p>"
+        )
+        self.assertEqual(
+            projet.search_description, "Un spectacle engagé sur les femmes."
+        )
+
+    def test_save_fallback_depuis_description_si_pas_de_presentation(self):
+        projet = self._projet(description="<p>Seule une description existe.</p>")
+        self.assertEqual(projet.search_description, "Seule une description existe.")
+
+    def test_save_fallback_tronque_a_155_caracteres(self):
+        projet = self._projet(description="<p>" + "mot " * 80 + "</p>")
+        self.assertLessEqual(len(projet.search_description), 155)
+
+    def test_save_ne_ecrase_pas_une_description_existante(self):
+        projet = self._projet(
+            search_description="Description écrite à la main",
+            description="<p>Contenu de la page.</p>",
+        )
+        self.assertEqual(projet.search_description, "Description écrite à la main")
+
+    def test_save_sans_contenu_ne_cree_pas_de_description_vide(self):
+        # fallback impossible : le champ reste vide plutôt qu'une chaîne vide
+        # qui écraserait un éventuel remplissage ultérieur.
+        projet = self._projet()
+        self.assertEqual(projet.search_description, "")
+
+    def test_rendu_contient_meta_description_non_vide(self):
+        projet = self._projet(
+            infos_complementaires="<p>La première avocate française.</p>"
+        )
+        response = self.client.get(projet.url)
+        self.assertContains(
+            response, '<meta name="description" content="La première avocate française." />'
+        )
+
+    def test_migration_remplit_jeanne_chauvin(self):
+        projet = self._projet(
+            slug="jeanne-chauvin",
+            description="<p>Contenu existant.</p>",
+        )
+        # Simule l'état en production : page créée avant le fallback, champ vide.
+        ProjetPage.objects.filter(pk=projet.pk).update(search_description="")
+        migration_meta.remplir(apps, None)
+        projet.refresh_from_db()
+        self.assertEqual(
+            projet.search_description,
+            migration_meta.DESCRIPTION_JEANNE_CHAUVIN,
+        )
+
+    def test_migration_fallback_pour_les_autres_pages_sans_description(self):
+        projet = self._projet(
+            slug="autre-spectacle",
+            description="<p>Un autre spectacle sans description courte.</p>",
+        )
+        ProjetPage.objects.filter(pk=projet.pk).update(search_description="")
+        migration_meta.remplir(apps, None)
+        projet.refresh_from_db()
+        self.assertEqual(
+            projet.search_description, "Un autre spectacle sans description courte."
+        )
+
+    def test_migration_ne_touche_pas_les_pages_remplies(self):
+        projet = self._projet(search_description="Déjà renseignée")
+        migration_meta.remplir(apps, None)
+        projet.refresh_from_db()
+        self.assertEqual(projet.search_description, "Déjà renseignée")
+
+    def test_fallback_tronque_comme_le_modele(self):
+        # La migration duplique la logique du modèle : les deux doivent produire
+        # le même résultat pour un contenu donné.
+        contenu = "<p>" + "phrase " * 60 + "</p>"
+        projet = self._projet(description=contenu)
+        self.assertEqual(
+            projet.search_description, migration_meta.fallback(projet)
+        )
 
 
 class GalerieAltTextTests(WagtailPageTestCase):

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block og_image %}{% if page.banner_image %}{% image page.banner_image width-1200 as og %}<meta property="og:image" content="https://latribudoya.fr{{ og.url }}" />{% endif %}{% endblock %}
+
+{% block content %}
+{# ---- Bannière ---- #}
+{% if page.banner_image %}{% image page.banner_image fill-1920x1080 as bg %}{% endif %}
+<section class="relative min-h-[60vh] flex items-end bg-cover bg-center"
+         {% if bg %}style="background-image: url('{{ bg.url }}');"{% endif %}>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10"></div>
+    <div class="relative w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold leading-none drop-shadow-lg">{{ page.title }}</h1>
+    </div>
+</section>
+
+<div class="w-full max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12 py-12 lg:py-16">
+    <div class="max-w-6xl mx-auto flex flex-col gap-12">
+        {% for block in page.body %}
+        {% if block.block_type == 'heading' %}
+        <section>
+            {% include_block block %}
+            <div class="w-12 h-1 bg-secondary rounded-full mt-2 mb-8"></div>
+        </section>
+        {% else %}
+        {% include_block block %}
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
