@@ -199,10 +199,30 @@ class ProjetActeur(Orderable):
         "Copyright / crédit photo", max_length=255, blank=True,
         help_text="Affiché en surimpression de la photo (ex. « © Nom du photographe »).",
     )
+    photo_2 = models.ForeignKey(
+        "wagtailimages.Image",
+        verbose_name="Seconde photo",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Optionnelle : à renseigner si deux personnes se partagent le rôle. "
+                  "Les deux photos s'affichent côte à côte.",
+    )
+    copyright_2 = models.CharField(
+        "Copyright / crédit de la seconde photo", max_length=255, blank=True,
+    )
 
     panels = [
-        FieldPanel("photo"),
-        FieldPanel("copyright"),
+        MultiFieldPanel(
+            [FieldPanel("photo"), FieldPanel("copyright")],
+            heading="Photo",
+        ),
+        MultiFieldPanel(
+            [FieldPanel("photo_2"), FieldPanel("copyright_2")],
+            heading="Seconde photo (rôle partagé)",
+            classname="collapsed",
+        ),
         FieldPanel("nom"),
         FieldPanel("role"),
     ]

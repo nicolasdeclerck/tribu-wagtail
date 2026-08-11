@@ -192,11 +192,21 @@
             <ul class="space-y-4">
                 {% for acteur in acteurs %}
                 <li class="flex items-center gap-4">
-                    {% if acteur.photo %}
-                    {% image acteur.photo fill-128x128 as ph %}
-                    <img class="w-14 h-14 shrink-0 rounded-full object-cover"
-                         src="{{ ph.url }}" alt="{{ acteur.nom }}"
-                         {% if acteur.copyright %}title="{{ acteur.copyright }}"{% endif %}>
+                    {% if acteur.photo or acteur.photo_2 %}
+                    <div class="flex shrink-0 items-center gap-1.5">
+                        {% if acteur.photo %}
+                        {% image acteur.photo fill-128x128 as ph %}
+                        <img class="w-14 h-14 shrink-0 rounded-full object-cover"
+                             src="{{ ph.url }}" alt="{{ acteur.nom }}"
+                             {% if acteur.copyright %}title="{{ acteur.copyright }}"{% endif %}>
+                        {% endif %}
+                        {% if acteur.photo_2 %}
+                        {% image acteur.photo_2 fill-128x128 as ph2 %}
+                        <img class="w-14 h-14 shrink-0 rounded-full object-cover"
+                             src="{{ ph2.url }}" alt="{{ acteur.nom }}"
+                             {% if acteur.copyright_2 %}title="{{ acteur.copyright_2 }}"{% endif %}>
+                        {% endif %}
+                    </div>
                     {% else %}
                     <div class="w-14 h-14 shrink-0 rounded-full bg-white/10 flex items-center justify-center text-white/40 font-semibold" aria-hidden="true">{{ acteur.nom|first|upper }}</div>
                     {% endif %}
