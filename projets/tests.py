@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from importlib import import_module
 
 from django.utils import timezone
@@ -7,6 +7,7 @@ from wagtail.test.utils import WagtailPageTestCase
 
 from home.models import HomePage
 from projets.models import ProjetIndexPage, ProjetPage, ProjetRepresentation
+from projets.structured_data import parse_horaire
 
 # Le nom des modules commence par un chiffre : import dynamique obligatoire.
 parse_date = import_module(
@@ -147,3 +148,89 @@ class ConversionRevisionsTests(WagtailPageTestCase):
     def test_contenu_sans_representations_ignore(self):
         self.assertFalse(convertir_contenu({"title": "Une page"}))
         self.assertFalse(convertir_contenu({"representations": None}))
+
+
+class TheaterEventJsonLdTests(WagtailPageTestCase):
+    """JSON-LD schema.org TheaterEvent sur les pages spectacle et l'accueil."""
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        self.home = HomePage(title="Home")
+        root_page.add_child(instance=self.home)
+        index = ProjetIndexPage(title="Projets")
+        self.home.add_child(instance=index)
+        self.projet = ProjetPage(title="Mon spectacle")
+        index.add_child(instance=self.projet)
+        self.aujourdhui = timezone.localdate()
+
+    def _rep(self, jours, **kwargs):
+        return ProjetRepresentation.objects.create(
+            page=self.projet,
+            date=None if jours is None else self.aujourdhui + timedelta(days=jours),
+            **kwargs,
+        )
+
+    def test_parse_horaire(self):
+        self.assertEqual(parse_horaire("20h"), time(20, 0))
+        self.assertEqual(parse_horaire("20h30"), time(20, 30))
+        self.assertEqual(parse_horaire("20:30"), time(20, 30))
+        self.assertEqual(parse_horaire("20 h 30"), time(20, 30))
+        self.assertIsNone(parse_horaire(""))
+        self.assertIsNone(parse_horaire("soirée"))
+        self.assertIsNone(parse_horaire("25h"))
+
+    def test_jsonld_theater_event_sur_page_spectacle(self):
+        self._rep(
+            10,
+            lieu="Bazaar Saint So - 292 rue Camille Guérin, 59000 Lille",
+            horaire="20h30",
+            billetterie="https://billets.example.com",
+        )
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, '"@type": "TheaterEvent"')
+        self.assertContains(
+            response,
+            "Mon spectacle — Bazaar Saint So - 292 rue Camille Guérin, 59000 Lille",
+        )
+        self.assertContains(response, "T20:30:00")
+        self.assertContains(response, '"eventStatus"')
+        self.assertContains(response, '"Bazaar Saint So"')
+        self.assertContains(response, "292 rue Camille Guérin")
+        self.assertContains(response, '"59000"')
+        self.assertContains(response, '"Lille"')
+        self.assertContains(response, "https://billets.example.com")
+        self.assertContains(response, '"@type": "BreadcrumbList"')
+
+    def test_jsonld_exclut_sans_date_et_passees(self):
+        self._rep(None)
+        self._rep(-10)
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, '"@type": "BreadcrumbList"')
+        self.assertNotContains(response, '"@type": "TheaterEvent"')
+
+    def test_jsonld_pas_de_theater_event_sans_representation(self):
+        response = self.client.get(self.projet.url)
+        self.assertNotContains(response, '"@type": "TheaterEvent"')
+
+    def test_jsonld_accueil(self):
+        self._rep(
+            10,
+            lieu="Jardin de la maison des jeunes, 31 rue Jules Guesde, 59000 Lille",
+            horaire="17h",
+        )
+        response = self.client.get(self.home.url)
+        self.assertContains(response, '"@type": "PerformingGroup"')
+        self.assertContains(response, '"La tribu d\'Oya"')
+        self.assertContains(response, '"@type": "TheaterEvent"')
+        self.assertContains(response, "T17:00:00")
+        self.assertContains(response, "31 rue Jules Guesde")
+
+        # Une représentation passée ne doit pas apparaître dans le JSON-LD.
+        self._rep(-10)
+        response = self.client.get(self.home.url)
+        self.assertNotContains(
+            response, (self.aujourdhui - timedelta(days=10)).isoformat()
+        )

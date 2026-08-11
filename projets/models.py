@@ -87,6 +87,24 @@ class ProjetPage(Page):
     parent_page_types = ["projets.ProjetIndexPage"]
     subpage_types = []
 
+    def get_context(self, request, *args, **kwargs):
+        from projets.structured_data import (
+            breadcrumbs_dict,
+            dumps_json_ld,
+            theater_event_dict,
+        )
+
+        context = super().get_context(request, *args, **kwargs)
+        context["structured_data"] = dumps_json_ld(
+            [breadcrumbs_dict(request, self)]
+            + [
+                theater_event_dict(request, r)
+                for r in self.representations_a_venir
+                if r.date
+            ]
+        )
+        return context
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [

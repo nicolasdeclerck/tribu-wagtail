@@ -251,6 +251,9 @@
     </aside>
 </div>
 {% endwith %}
+
+{# ---- Données structurées schema.org : TheaterEvent + BreadcrumbList ---- #}
+{% if structured_data %}<script type="application/ld+json">{{ structured_data|safe }}</script>{% endif %}
 {% endblock %}
 
 {% block extra_js %}{% if page.gallery_images.all %}
