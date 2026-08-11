@@ -1,9 +1,12 @@
 from django.conf import settings
 from django.urls import include, path
 from django.contrib import admin
+from django.views.generic import TemplateView
 
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail import urls as wagtail_urls
+from wagtail.contrib.sitemaps import Sitemap
+from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
 from search import views as search_views
@@ -13,6 +16,24 @@ urlpatterns = [
     path("admin/", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
     path("search/", search_views.search, name="search"),
+    # Fichiers SEO de base — servis par Django (avant le catch-all Wagtail) :
+    #  - /robots.txt : autorise tout le crawl + référence le sitemap.
+    #  - /sitemap.xml : sitemap Wagtail natif (pages live + publiques du site
+    #    par défaut). La vue wagtail.contrib.sitemaps.views.sitemap passe la
+    #    requête au Sitemap. Le protocole https vient du Site Wagtail
+    #    (latribudoya.fr:443 — cf. migration home/0008_fix_site_hostname,
+    #    PR canonical).
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+        name="robots",
+    ),
+    path(
+        "sitemap.xml",
+        sitemap,
+        {"sitemaps": {"wagtail": Sitemap()}},
+        name="wagtail_sitemap",
+    ),
 ]
 
 
