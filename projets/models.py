@@ -3,6 +3,8 @@ from urllib.parse import parse_qs, urlparse
 
 from django.db import models
 from django.utils import timezone
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
@@ -10,6 +12,9 @@ from wagtail.models import Orderable, Page
 from wagtail.search import index
 
 CREDIT_FEATURES = ["bold", "italic", "link"]
+
+# Longueur cible d'une meta description (Google tronque au-delà de ~160 caractères).
+META_DESCRIPTION_MAX_LENGTH = 155
 
 
 class ProjetIndexPage(Page):
@@ -132,6 +137,25 @@ class ProjetPage(Page):
         index.SearchField("credit"),
         index.SearchField("infos_complementaires"),
     ]
+
+    def _fallback_search_description(self):
+        """Génère une meta description depuis le contenu de la page.
+
+        Priorité : présentation du spectacle (infos_complementaires), puis
+        description. Le HTML est retiré et le texte tronqué à ~155 caractères
+        pour rester dans la longueur affichée par Google.
+        """
+        source = (self.infos_complementaires or "").strip() or (self.description or "").strip()
+        texte = " ".join(strip_tags(source).split())
+        return Truncator(texte).chars(META_DESCRIPTION_MAX_LENGTH, truncate="…") if texte else ""
+
+    def save(self, *args, **kwargs):
+        # Fallback SEO : garantit une meta description non vide même si l'onglet
+        # « Promotion » de l'admin n'a pas été rempli (ex. page créée avant ce
+        # comportement, comme /projets/jeanne-chauvin/).
+        if not self.search_description:
+            self.search_description = self._fallback_search_description()
+        return super().save(*args, **kwargs)
 
     @property
     def has_detail_page(self):

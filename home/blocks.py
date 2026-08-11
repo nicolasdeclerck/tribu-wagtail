@@ -204,3 +204,30 @@ class CustomSectionBlock(BaseContentBlock):
 
     class Meta:
         label = "Section personnalisable"
+
+
+class FaqItemBlock(blocks.StructBlock):
+    """Une entrée de FAQ : question + réponse (affichage repliable)."""
+
+    question = blocks.CharBlock(label="Question", max_length=255)
+    answer = blocks.RichTextBlock(label="Réponse", features=CONTENT_FEATURES)
+
+    class Meta:
+        icon = "help"
+        label = "Question / Réponse"
+
+
+class FaqBlock(blocks.StructBlock):
+    """Bloc « Questions fréquentes » : accordéon repliable (Alpine.js),
+    cohérent avec le reste du site (x-data / x-show, pas de plugin collapse)."""
+
+    title = blocks.CharBlock(
+        label="Titre de la section", required=False, max_length=255,
+        help_text="Optionnel : affiché au-dessus de l'accordéon.",
+    )
+    items = blocks.ListBlock(FaqItemBlock(), label="Questions", min_num=1)
+
+    class Meta:
+        icon = "list-ul"
+        label = "FAQ (accordéon)"
+        template = "home/blocks/faq_block.html"
