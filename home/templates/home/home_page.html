@@ -90,8 +90,9 @@
                     {% else %}
                     <p class="font-semibold">{{ rep.page.title }}</p>
                     {% endif %}
-                    <p class="text-sm">{{ rep.date }}{% if rep.horaire %} <span class="text-white/70">· {{ rep.horaire }}</span>{% endif %}</p>
+                    <p class="text-sm">{{ rep.date|date:"j F Y"|default:"Date à préciser" }}{% if rep.horaire %} <span class="text-white/70">· {{ rep.horaire }}</span>{% endif %}</p>
                     {% if rep.lieu %}<p class="text-sm text-white/70">{{ rep.lieu }}</p>{% endif %}
+                    {% if rep.detail %}<p class="text-xs text-white/50">{{ rep.detail }}</p>{% endif %}
                     {% if rep.billetterie %}
                     <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"
                        class="inline-flex items-center gap-1.5 pt-1 text-sm font-semibold text-secondary hover:text-white transition-colors">
@@ -134,9 +135,12 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="py-4 pr-6 whitespace-nowrap">{{ rep.date }}</td>
+                        <td class="py-4 pr-6 whitespace-nowrap">{{ rep.date|date:"j F Y"|default:"—" }}</td>
                         <td class="py-4 pr-6 text-white/70 whitespace-nowrap">{{ rep.horaire|default:"—" }}</td>
-                        <td class="py-4 pr-6 text-white/70">{{ rep.lieu|default:"—" }}</td>
+                        <td class="py-4 pr-6 text-white/70">
+                            {{ rep.lieu|default:"—" }}
+                            {% if rep.detail %}<span class="block text-xs text-white/50">{{ rep.detail }}</span>{% endif %}
+                        </td>
                         <td class="py-4">
                             {% if rep.billetterie %}
                             <a href="{{ rep.billetterie }}" target="_blank" rel="noopener noreferrer"

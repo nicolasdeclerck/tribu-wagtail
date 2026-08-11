@@ -1,6 +1,8 @@
+from datetime import date
 from urllib.parse import parse_qs, urlparse
 
 from django.db import models
+from django.utils import timezone
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField
@@ -118,6 +120,32 @@ class ProjetPage(Page):
         return not self.is_in_progress
 
     @property
+    def representations_a_venir(self):
+        """Représentations pas encore jouées, de la plus proche à la plus lointaine.
+
+        Les entrées sans date (héritage de l'ancien champ texte) sont conservées
+        en fin de liste plutôt que masquées.
+        """
+        aujourdhui = timezone.localdate()
+        reps = [
+            r for r in self.representations.all()
+            if r.date is None or r.date >= aujourdhui
+        ]
+        return sorted(
+            reps, key=lambda r: (r.date is None, r.date or date.max, r.sort_order or 0)
+        )
+
+    @property
+    def representations_passees(self):
+        """Représentations déjà jouées, de la plus récente à la plus ancienne."""
+        aujourdhui = timezone.localdate()
+        reps = [
+            r for r in self.representations.all()
+            if r.date is not None and r.date < aujourdhui
+        ]
+        return sorted(reps, key=lambda r: r.date, reverse=True)
+
+    @property
     def youtube_embed_url(self):
         """Normalise n'importe quel lien YouTube (youtu.be, watch?v=, shorts,
         embed) en URL d'intégration utilisable dans une iframe."""
@@ -159,20 +187,33 @@ class ProjetGalleryImage(Orderable):
 
 
 class ProjetRepresentation(Orderable):
-    """Une prochaine représentation du spectacle (date, horaire, lieu, billetterie)."""
+    """Une représentation du spectacle (date, horaire, lieu, billetterie).
+
+    Le classement passé / à venir est automatique à partir de `date` : voir
+    `ProjetPage.representations_a_venir` et `ProjetPage.representations_passees`.
+    """
 
     page = ParentalKey(
         ProjetPage, on_delete=models.CASCADE, related_name="representations"
     )
-    date = models.CharField(max_length=255)
+    # null=True (et non blank=True) : la saisie reste obligatoire dans l'admin,
+    # mais les entrées historiques dont la date en texte libre n'a pas pu être
+    # convertie survivent à la migration sans être perdues.
+    date = models.DateField("Date", null=True)
     horaire = models.CharField(max_length=255, blank=True)
     lieu = models.CharField(max_length=255, blank=True)
+    detail = models.CharField(
+        "Détail", max_length=255, blank=True,
+        help_text="Précision affichée en petit sous le lieu "
+                  "(ex. « Salle Jean Vilar », « Dans le cadre du festival… »).",
+    )
     billetterie = models.URLField("Lien billetterie", blank=True)
 
     panels = [
         FieldPanel("date"),
         FieldPanel("horaire"),
         FieldPanel("lieu"),
+        FieldPanel("detail"),
         FieldPanel("billetterie"),
     ]
 

@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from home.models import HomePage
 
+from django.utils import timezone
 from wagtail.models import Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
@@ -58,19 +61,41 @@ class HomeTests(WagtailPageTestCase):
         index.add_child(instance=projet)
         ProjetRepresentation.objects.create(
             page=projet,
-            date="12 juillet 2026",
+            date=timezone.localdate() + timedelta(days=30),
             horaire="20h30",
             lieu="Théâtre municipal",
+            detail="Salle Jean Vilar",
             billetterie="https://billetterie.example.com",
         )
 
         response = self.client.get(self.homepage.url)
         self.assertContains(response, "Réservez vos places")
         self.assertContains(response, "Mon spectacle")
-        self.assertContains(response, "12 juillet 2026")
         self.assertContains(response, "20h30")
         self.assertContains(response, "Théâtre municipal")
+        self.assertContains(response, "Salle Jean Vilar")
         self.assertContains(response, "https://billetterie.example.com")
+
+    def test_reservations_section_ignores_past_representations(self):
+        from projets.models import (
+            ProjetIndexPage,
+            ProjetPage,
+            ProjetRepresentation,
+        )
+
+        index = ProjetIndexPage(title="Projets")
+        self.homepage.add_child(instance=index)
+        projet = ProjetPage(title="Mon spectacle")
+        index.add_child(instance=projet)
+        ProjetRepresentation.objects.create(
+            page=projet,
+            date=timezone.localdate() - timedelta(days=1),
+            lieu="Théâtre d'hier",
+        )
+
+        response = self.client.get(self.homepage.url)
+        self.assertNotContains(response, "Réservez vos places")
+        self.assertNotContains(response, "Théâtre d'hier")
 
     def test_reservations_section_ignores_unpublished_projects(self):
         from projets.models import (
@@ -83,7 +108,9 @@ class HomeTests(WagtailPageTestCase):
         self.homepage.add_child(instance=index)
         projet = ProjetPage(title="Spectacle brouillon", live=False)
         index.add_child(instance=projet)
-        ProjetRepresentation.objects.create(page=projet, date="1 août 2026")
+        ProjetRepresentation.objects.create(
+            page=projet, date=timezone.localdate() + timedelta(days=30)
+        )
 
         response = self.client.get(self.homepage.url)
         self.assertNotContains(response, "Réservez vos places")
