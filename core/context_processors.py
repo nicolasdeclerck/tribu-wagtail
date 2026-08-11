@@ -18,3 +18,15 @@ def analytics(request):
         "PLAUSIBLE_DOMAIN": settings.PLAUSIBLE_DOMAIN,
         "PLAUSIBLE_SCRIPT_URL": settings.PLAUSIBLE_SCRIPT_URL,
     }
+
+
+def site_url(request):
+    """Expose l'URL publique du site (WAGTAILADMIN_BASE_URL) aux templates.
+
+    Utilisée pour canonical/og:url : on construit l'URL publique réelle
+    (https://latribudoya.fr{path}) indépendamment de l'hôte de la requête et
+    de l'enregistrement Wagtail Site (dont le hostname peut pointer vers un
+    hôte interne non résolu publiquement).
+    """
+    base_url = getattr(settings, "WAGTAILADMIN_BASE_URL", "").rstrip("/")
+    return {"SITE_BASE_URL": base_url}

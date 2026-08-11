@@ -58,3 +58,69 @@ class PlausibleSnippetTests(WagtailPageTestCase):
         body = self._get_body()
 
         self.assertNotIn("data-domain", body)
+
+
+class CanonicalUrlTests(WagtailPageTestCase):
+    """Canonical & og:url doivent pointer vers l'URL publique réelle.
+
+    Bug (issue #12) : le template utilisait ``page.full_url``, construit depuis
+    l'enregistrement Wagtail Site — dont le hostname était un hôte interne
+    (``latribudoya``) en production → canonical ``http://latribudoya/...``
+    (DNS KO). Le fix construit canonical/og:url depuis ``SITE_BASE_URL``
+    (WAGTAILADMIN_BASE_URL), indépendamment de l'enregistrement Site et de
+    l'hôte de la requête. La page 404 ne doit plus émettre de canonical vide.
+    """
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        self.homepage = HomePage(title="Home")
+        root_page.add_child(instance=self.homepage)
+        # Hostname interne, comme en production au moment du bug : l'URL
+        # publique émise ne doit PAS en dépendre. Site enraciné sur la
+        # homepage, comme en production (url_path "/" → /reseaux/, …).
+        Site.objects.create(
+            hostname="latribudoya", root_page=self.homepage, is_default_site=True
+        )
+
+    def test_canonical_uses_public_base_url(self):
+        body = self.client.get(self.homepage.url).content.decode()
+
+        self.assertIn(
+            '<link rel="canonical" href="https://latribudoya.fr/" />', body
+        )
+        self.assertNotIn("http://latribudoya", body)
+
+    def test_og_url_uses_public_base_url(self):
+        body = self.client.get(self.homepage.url).content.decode()
+
+        self.assertIn(
+            '<meta property="og:url" content="https://latribudoya.fr/" />', body
+        )
+
+    def test_canonical_includes_page_path(self):
+        from reseaux.models import ReseauxPage
+
+        page = ReseauxPage(title="Reseaux", slug="reseaux")
+        self.homepage.add_child(instance=page)
+        page.save_revision().publish()
+
+        body = self.client.get(page.url).content.decode()
+
+        self.assertIn(
+            '<link rel="canonical" href="https://latribudoya.fr/reseaux/" />',
+            body,
+        )
+        self.assertIn(
+            '<meta property="og:url" content="https://latribudoya.fr/reseaux/" />',
+            body,
+        )
+
+    def test_404_has_no_empty_canonical(self):
+        response = self.client.get("/cette-page-nexiste-pas/")
+
+        self.assertEqual(response.status_code, 404)
+        body = response.content.decode()
+        # Plus de canonical vide (href="") : la balise n'est pas émise du tout.
+        self.assertNotIn('rel="canonical"', body)
+        self.assertNotIn('property="og:url"', body)
+        self.assertNotIn('href=""', body)

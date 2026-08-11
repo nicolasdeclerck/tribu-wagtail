@@ -86,6 +86,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.analytics",
                 "core.context_processors.turnstile",
+                "core.context_processors.site_url",
             ],
         },
     },
