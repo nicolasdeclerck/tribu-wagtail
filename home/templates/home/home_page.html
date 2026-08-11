@@ -190,4 +190,6 @@
         </article>
     {% endfor %}
 </div>
+{# ---- Données structurées schema.org : TheaterEvent + PerformingGroup ---- #}
+{% if structured_data %}<script type="application/ld+json">{{ structured_data|safe }}</script>{% endif %}
 {% endblock %}
