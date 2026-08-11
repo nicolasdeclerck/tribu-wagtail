@@ -3,11 +3,19 @@ from importlib import import_module
 
 from django.apps import apps
 from django.utils import timezone
+from wagtail.images import get_image_model
+from wagtail.images.tests.utils import get_test_image_file
 from wagtail.models import Page, Site
 from wagtail.test.utils import WagtailPageTestCase
 
 from home.models import HomePage
-from projets.models import ProjetIndexPage, ProjetPage, ProjetRepresentation
+from projets.models import (
+    ProjetActeur,
+    ProjetGalleryImage,
+    ProjetIndexPage,
+    ProjetPage,
+    ProjetRepresentation,
+)
 from projets.structured_data import parse_horaire
 
 # Le nom des modules commence par un chiffre : import dynamique obligatoire.
@@ -342,3 +350,62 @@ class MetaDescriptionTests(WagtailPageTestCase):
         self.assertEqual(
             projet.search_description, migration_meta.fallback(projet)
         )
+
+
+class GalerieAltTextTests(WagtailPageTestCase):
+    """Textes alternatifs SEO/accessibilité des images de galerie."""
+
+    def setUp(self):
+        root_page = Page.get_first_root_node()
+        Site.objects.create(
+            hostname="testsite", root_page=root_page, is_default_site=True
+        )
+        homepage = HomePage(title="Home")
+        root_page.add_child(instance=homepage)
+        index = ProjetIndexPage(title="Projets")
+        homepage.add_child(instance=index)
+        self.projet = ProjetPage(title="Olympe", annee="2025")
+        index.add_child(instance=self.projet)
+
+        Image = get_image_model()
+        self.image = Image(title="olympe-1", file=get_test_image_file())
+        self.image.save()
+        self.galerie = ProjetGalleryImage.objects.create(
+            page=self.projet, image=self.image
+        )
+
+    def test_alt_slider_contient_spectacle_et_annee(self):
+        response = self.client.get(self.projet.url)
+        self.assertContains(
+            response, 'alt="Affiche du spectacle Olympe — création 2025"'
+        )
+
+    def test_alt_miniature_contient_spectacle_annee_et_photo(self):
+        response = self.client.get(self.projet.url)
+        self.assertContains(
+            response, 'alt="Affiche du spectacle Olympe — création 2025 — photo 1"'
+        )
+
+    def test_alt_sans_annee_omet_creation(self):
+        self.projet.annee = ""
+        self.projet.save()
+        response = self.client.get(self.projet.url)
+        self.assertContains(
+            response, 'alt="Affiche du spectacle Olympe"'
+        )
+        self.assertNotContains(response, "création")
+
+    def test_alt_priorite_a_la_description_de_l_image(self):
+        self.image.description = "Photo de scène d'Olympe"
+        self.image.save()
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, 'alt="Photo de scène d&#x27;Olympe"')
+
+    def test_alt_acteurs_inchange(self):
+        acteur = ProjetActeur.objects.create(
+            page=self.projet, nom="Stéphanie Horel", role="Mise en scène"
+        )
+        acteur.photo = self.image
+        acteur.save()
+        response = self.client.get(self.projet.url)
+        self.assertContains(response, 'alt="Stéphanie Horel"')

@@ -227,6 +227,21 @@ class ProjetGalleryImage(Orderable):
 
     panels = [FieldPanel("image")]
 
+    @property
+    def alt_text(self):
+        """Texte alternatif SEO/accessibilité pour l'image de galerie.
+
+        Priorité à la description de l'image si elle est renseignée dans
+        l'admin Wagtail ; sinon chaîne dérivée de la page : « Affiche du
+        spectacle {titre} — création {année} » (année omise si absente).
+        """
+        if self.image.description.strip():
+            return self.image.description.strip()
+        base = f"Affiche du spectacle {self.page.title}"
+        if self.page.annee:
+            base += f" — création {self.page.annee}"
+        return base
+
 
 class ProjetRepresentation(Orderable):
     """Une représentation du spectacle (date, horaire, lieu, billetterie).

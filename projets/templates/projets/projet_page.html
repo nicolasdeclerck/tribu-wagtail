@@ -112,7 +112,7 @@
                     {% for item in gallery %}
                         {% image item.image fill-1200x800 as img %}
                         <div class="swiper-slide">
-                            <img class="block w-full h-full object-cover" src="{{ img.url }}" alt="{{ page.title }}">
+                            <img class="block w-full h-full object-cover" src="{{ img.url }}" alt="{{ item.alt_text }}">
                         </div>
                     {% endfor %}
                 </div>
@@ -124,7 +124,7 @@
                     {% for item in gallery %}
                         {% image item.image fill-240x160 as thumb %}
                         <div class="swiper-slide">
-                            <img src="{{ thumb.url }}" alt="{{ page.title }} — miniature {{ forloop.counter }}">
+                            <img src="{{ thumb.url }}" alt="{{ item.alt_text }} — photo {{ forloop.counter }}">
                         </div>
                     {% endfor %}
                 </div>
