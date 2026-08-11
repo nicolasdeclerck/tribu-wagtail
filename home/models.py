@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import F, Q
+from django.utils import timezone
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.fields import RichTextField, StreamField
@@ -46,12 +48,15 @@ class HomePage(Page):
         # Stages + projets restent exposés pour le bloc SEO (sr-only) uniquement.
         context["seo_stages"] = StagePage.objects.live().order_by("ordre")
         context["seo_projets"] = ProjetPage.objects.live().order_by("ordre")
-        # Toutes les représentations prévues (tous spectacles publiés confondus),
-        # pour le tableau « Réservez vos places ! » sous le carrousel.
+        # Représentations encore à venir (tous spectacles publiés confondus),
+        # pour le tableau « Réservez vos places ! » sous le carrousel. Les dates
+        # passées disparaissent d'elles-mêmes ; les entrées sans date (héritage
+        # de l'ancien champ texte) sont conservées en fin de tableau.
         context["representations"] = (
             ProjetRepresentation.objects.filter(page__live=True)
+            .filter(Q(date__gte=timezone.localdate()) | Q(date__isnull=True))
             .select_related("page")
-            .order_by("page__ordre", "sort_order")
+            .order_by(F("date").asc(nulls_last=True), "page__ordre", "sort_order")
         )
         return context
 
