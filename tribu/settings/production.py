@@ -82,7 +82,7 @@ LOGGING = {
 
 # EMAIL ------------------------------------------------------------------
 
-# SMTP activé dès que EMAIL_HOST est défini (ex. Gmail, cf. README) ; sinon
+# SMTP activé dès que EMAIL_HOST est défini (OVH, cf. README) ; sinon
 # les mails (formulaire de contact…) sont seulement écrits dans les logs.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_BACKEND = os.environ.get(
@@ -99,8 +99,8 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "false").lower() == "true"
 EMAIL_TIMEOUT = 10
 
 # Expéditeur par défaut quand le champ « Adresse de l'expéditeur » de la page
-# de contact est vide. Avec Gmail, il doit s'agir du compte (ou d'un alias
-# validé) : Gmail réécrit toute autre adresse.
+# de contact est vide. Doit être la boîte OVH authentifiée (EMAIL_HOST_USER) :
+# le SMTP OVH refuse d'envoyer au nom d'une autre adresse.
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "webmaster@localhost"
 )

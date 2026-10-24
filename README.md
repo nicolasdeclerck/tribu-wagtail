@@ -154,56 +154,65 @@ TLS devant Nginx (Traefik, Caddy, certbot, ou le load-balancer de l'hébergeur),
 puis passer `DJANGO_SECURE_SSL_REDIRECT=true` dans `.env`. Le header
 `X-Forwarded-Proto` est déjà pris en compte côté Django.
 
-### Envoi des emails (formulaire de contact, via Gmail)
+### Envoi des emails (formulaire de contact, via le SMTP OVH)
 
 Chaque message envoyé depuis la page Contact est **enregistré dans l'admin**
 (page Contact → *Soumissions*, export CSV possible) **et envoyé par email**. Le
 mécanisme est celui du form builder natif de Wagtail (`AbstractEmailForm`) ;
 la réponse au mail (« Répondre ») part directement vers l'adresse du visiteur.
+L'envoi passe par le serveur SMTP OVH du domaine `latribudoya.fr`.
 
-**1. Préparer le compte Google** (celui qui *envoie* les mails)
+**1. Préparer la boîte d'envoi dans l'espace client OVH**
 
-1. Activer la **validation en deux étapes** : https://myaccount.google.com/security
-   (prérequis pour l'étape suivante).
-2. Créer un **mot de passe d'application** : https://myaccount.google.com/apppasswords
-   → nom « Site tribu » → Google affiche un code de 16 caractères. Le copier
-   **sans les espaces** (il ne sera plus affiché).
+*Web Cloud → Emails → latribudoya.fr* : créer (ou choisir) la boîte qui servira
+à **envoyer**, par ex. `no-reply@latribudoya.fr`, et noter son mot de passe.
+Elle peut être différente de la boîte qui **reçoit** les messages
+(`contact@latribudoya.fr`). Le SMTP OVH n'accepte d'envoyer qu'au nom de la
+boîte authentifiée.
 
-> Avec un compte Google Workspace, l'administrateur du domaine doit autoriser
-> les mots de passe d'application. Le mot de passe habituel du compte, lui,
-> ne fonctionne **pas** en SMTP.
+Le serveur SMTP dépend de l'offre (visible dans l'espace client) :
+
+| Offre OVH                         | `EMAIL_HOST`                 |
+|-----------------------------------|------------------------------|
+| MX Plan (emails inclus au domaine / à l'hébergement) | `ssl0.ovh.net` |
+| Email Pro                          | `pro1.mail.ovh.net` (ou `pro2`, `pro3`… selon la boîte) |
+| Exchange                           | `ex5.mail.ovh.net` (ou autre `exX`) |
 
 **2. Renseigner `.env`** sur le serveur, puis `docker compose up -d` :
 
 ```dotenv
-EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST=ssl0.ovh.net
 EMAIL_PORT=587
 EMAIL_USE_TLS=true
-EMAIL_HOST_USER=compte@gmail.com              # le compte Google
-EMAIL_HOST_PASSWORD=abcdefghijklmnop          # le mot de passe d'application
-DEFAULT_FROM_EMAIL="La tribu d'Oya <compte@gmail.com>"
+EMAIL_HOST_USER=no-reply@latribudoya.fr      # adresse complète de la boîte
+EMAIL_HOST_PASSWORD=mot-de-passe-de-la-boite
+DEFAULT_FROM_EMAIL="La tribu d'Oya <no-reply@latribudoya.fr>"
 ```
 
-Variante SSL : `EMAIL_PORT=465`, `EMAIL_USE_TLS=false`, `EMAIL_USE_SSL=true`.
-Sans `EMAIL_HOST`, aucun mail ne part (ils sont seulement écrits dans les logs
-du conteneur `web`).
+`DEFAULT_FROM_EMAIL` doit utiliser **la même adresse** que `EMAIL_HOST_USER`.
+Variante SSL (MX Plan) : `EMAIL_PORT=465`, `EMAIL_USE_TLS=false`,
+`EMAIL_USE_SSL=true`. Sans `EMAIL_HOST`, aucun mail ne part (ils sont seulement
+écrits dans les logs du conteneur `web`).
 
 **3. Choisir le destinataire dans l'admin** : *Pages → Contact → Modifier*,
 bloc « Envoi des réponses par email » :
 
 - **Adresse du destinataire** : la boîte qui reçoit les messages (plusieurs
   adresses possibles, séparées par des virgules) ; vide = pas d'envoi.
-- **Adresse de l'expéditeur** : laisser **vide** (→ `DEFAULT_FROM_EMAIL`).
-  Gmail remplace toute adresse qui n'est pas le compte ou un alias validé
-  (*Gmail → Paramètres → Comptes → Envoyer des emails en tant que*).
+- **Adresse de l'expéditeur** : laisser **vide** (→ `DEFAULT_FROM_EMAIL`), ou
+  saisir exactement la boîte d'envoi.
 - **Sujet** du mail.
 
 Publier la page. Ces réglages ne sont jamais écrasés par `seed_content`.
 
+**Délivrabilité** : si la zone DNS est gérée chez OVH, l'enregistrement SPF
+(`include:mx.ovh.com`) est en général déjà présent ; le vérifier dans
+*Domaines → latribudoya.fr → Zone DNS*, et activer DKIM si l'offre le propose,
+pour éviter que les mails tombent en spam.
+
 **Vérifier** : envoyer un message de test depuis le site. En cas de non-réception,
 `docker compose logs web | grep -i mail` montre l'erreur SMTP éventuelle (le
-message reste enregistré dans l'admin). Quota Gmail : ~500 envois/jour, largement
-suffisant pour un formulaire de contact.
+message reste enregistré dans l'admin).
 
 ### Mises à jour
 

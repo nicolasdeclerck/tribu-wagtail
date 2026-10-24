@@ -616,7 +616,7 @@ class Command(BaseCommand):
         }
         if not self.home.get_children().filter(slug="contact").exists():
             fields.update({
-                # Vide → DEFAULT_FROM_EMAIL (le compte Gmail d'envoi).
+                # Vide → DEFAULT_FROM_EMAIL (la boîte OVH d'envoi).
                 "from_address": "",
                 "to_address": "contact@latribudoya.fr",
                 "subject": "Nouveau message depuis le site",
