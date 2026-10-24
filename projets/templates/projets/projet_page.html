@@ -110,9 +110,10 @@
             <div class="swiper projet-gallery w-full h-[300px] sm:h-[380px] lg:h-[440px] bg-black rounded-md">
                 <div class="swiper-wrapper">
                     {% for item in gallery %}
-                        {% image item.image fill-1200x800 as img %}
+                        {# max- (et non fill-) + object-contain : l'image entière reste visible, portrait compris (bandes noires) #}
+                        {% image item.image max-1200x1200 as img %}
                         <div class="swiper-slide">
-                            <img class="block w-full h-full object-cover" src="{{ img.url }}" alt="{{ item.alt_text }}">
+                            <img class="block w-full h-full object-contain" src="{{ img.url }}" alt="{{ item.alt_text }}">
                         </div>
                     {% endfor %}
                 </div>
