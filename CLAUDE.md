@@ -30,7 +30,7 @@ python manage.py test home.tests.HomeTests.test_homepage_is_renderable   # un se
 `tribu/settings/` est un package à trois modules :
 - `base.py` — config partagée (INSTALLED_APPS, Wagtail, i18n fr/Europe-Paris). SQLite par défaut.
 - `dev.py` — `DEBUG=True`, SECRET_KEY en dur, `ALLOWED_HOSTS=["*"]`. Importe `.local` s'il existe (overrides non versionnés).
-- `production.py` — `DEBUG=False`, secrets et base via variables d'environnement (`SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`), `ManifestStaticFilesStorage`, durcissement HTTPS via `DJANGO_SECURE_SSL_REDIRECT`.
+- `production.py` — `DEBUG=False`, secrets et base via variables d'environnement (`SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`), `ManifestStaticFilesStorage`, durcissement HTTPS via `DJANGO_SECURE_SSL_REDIRECT`. SMTP (OVH, domaine latribudoya.fr) activé si `EMAIL_HOST` est défini, sinon backend console.
 
 ## Architecture
 

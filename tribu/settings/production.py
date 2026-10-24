@@ -82,9 +82,29 @@ LOGGING = {
 
 # EMAIL ------------------------------------------------------------------
 
+# SMTP activé dès que EMAIL_HOST est défini (OVH, cf. README) ; sinon
+# les mails (formulaire de contact…) sont seulement écrits dans les logs.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_BACKEND = os.environ.get(
-    "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST
+    else "django.core.mail.backends.console.EmailBackend",
 )
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "false").lower() == "true"
+EMAIL_TIMEOUT = 10
+
+# Expéditeur par défaut quand le champ « Adresse de l'expéditeur » de la page
+# de contact est vide. Doit être la boîte OVH authentifiée (EMAIL_HOST_USER) :
+# le SMTP OVH refuse d'envoyer au nom d'une autre adresse.
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "webmaster@localhost"
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 try:
     from .local import *  # noqa: F401,F403
