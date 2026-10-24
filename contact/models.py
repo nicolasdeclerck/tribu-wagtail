@@ -6,6 +6,8 @@ L'éditeur définit librement les champs du formulaire depuis l'admin (onglet
 exportable dans l'admin) et envoyée par email aux adresses configurées.
 """
 
+import logging
+
 from django.db import models
 from django.template.response import TemplateResponse
 from modelcluster.fields import ParentalKey
@@ -15,11 +17,14 @@ from wagtail.admin.panels import (
     InlinePanel,
     MultiFieldPanel,
 )
+from wagtail.admin.mail import send_mail
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField
 
 from core.turnstile import verify_turnstile
+
+logger = logging.getLogger(__name__)
 
 
 def _client_ip(request):
@@ -68,8 +73,42 @@ class FormPage(AbstractEmailForm):
                 FieldPanel("subject"),
             ],
             heading="Envoi des réponses par email",
+            help_text=(
+                "Chaque message reçu est envoyé à l'adresse du destinataire "
+                "(plusieurs adresses possibles, séparées par des virgules). "
+                "Laisser l'expéditeur vide pour utiliser l'adresse du serveur "
+                "d'envoi. « Répondre » écrit directement au visiteur."
+            ),
         ),
     ]
+
+    def send_mail(self, form):
+        """Envoi natif Wagtail, avec deux ajouts :
+
+        - Reply-To = premier champ « email » rempli par le visiteur, pour
+          pouvoir lui répondre directement depuis la messagerie ;
+        - une panne SMTP n'empêche pas la soumission : le message est déjà
+          enregistré (onglet « Soumissions » de l'admin), l'erreur est
+          journalisée et le visiteur voit quand même la page de remerciement.
+        """
+        addresses = [x.strip() for x in self.to_address.split(",") if x.strip()]
+        reply_to = [
+            form.cleaned_data[field.clean_name]
+            for field in self.get_form_fields()
+            if field.field_type == "email" and form.cleaned_data.get(field.clean_name)
+        ][:1]
+        try:
+            send_mail(
+                self.subject,
+                self.render_email(form),
+                addresses,
+                self.from_address,
+                reply_to=reply_to or None,
+            )
+        except Exception:
+            logger.exception(
+                "Échec de l'envoi du mail du formulaire de contact (page %s)", self.pk
+            )
 
     def serve(self, request, *args, **kwargs):
         """Vérifie le jeton Cloudflare Turnstile avant de traiter la soumission.

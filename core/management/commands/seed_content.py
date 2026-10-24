@@ -596,30 +596,32 @@ class Command(BaseCommand):
 
     def seed_contact(self):
         """Crée la page de contact (form builder natif) avec des champs par
-        défaut. Idempotent : les champs ne sont ajoutés que s'il n'y en a pas."""
+        défaut. Idempotent : les champs ne sont ajoutés que s'il n'y en a pas,
+        et les réglages d'envoi par email ne sont posés qu'à la création (ils
+        sont ensuite gérés dans l'admin et ne doivent pas être écrasés)."""
         from contact.models import FormField, FormPage
 
-        page = self.upsert(
-            self.home,
-            FormPage,
-            "contact",
-            {
-                "title": "Contact",
-                "show_in_menus": True,
-                "seo_title": "Contact - La tribu d'Oya",
-                "search_description": (
-                    "Contactez la compagnie de théâtre La tribu d'Oya."
-                ),
-                "intro": "<p>Une question, un projet ? Écrivez-nous.</p>",
-                "thank_you_text": (
-                    "<p>Merci pour votre message, nous vous répondrons "
-                    "rapidement.</p>"
-                ),
-                "from_address": "no-reply@latribudoya.fr",
+        fields = {
+            "title": "Contact",
+            "show_in_menus": True,
+            "seo_title": "Contact - La tribu d'Oya",
+            "search_description": (
+                "Contactez la compagnie de théâtre La tribu d'Oya."
+            ),
+            "intro": "<p>Une question, un projet ? Écrivez-nous.</p>",
+            "thank_you_text": (
+                "<p>Merci pour votre message, nous vous répondrons "
+                "rapidement.</p>"
+            ),
+        }
+        if not self.home.get_children().filter(slug="contact").exists():
+            fields.update({
+                # Vide → DEFAULT_FROM_EMAIL (le compte Gmail d'envoi).
+                "from_address": "",
                 "to_address": "contact@latribudoya.fr",
                 "subject": "Nouveau message depuis le site",
-            },
-        )
+            })
+        page = self.upsert(self.home, FormPage, "contact", fields)
         if not page.form_fields.exists():
             FormField.objects.create(
                 page=page, sort_order=0, label="Nom",
